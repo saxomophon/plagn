@@ -19,11 +19,15 @@ set(APP_COPYRIGHT "LGPL v2.1")
 
 project(plagn VERSION ${APP_VERSION} LANGUAGES CXX)
 
-file(GLOB SOURCES "src/*.cpp")
+file(GLOB SOURCES "src/*.cpp"
+                  "src/utils/*.cpp"
+                  "src/datagrams/*.cpp")
 
 add_executable(plagn ${SOURCES})
 
 # header files added to include dirs
-target_include_directories(plagn PRIVATE include)
+target_include_directories(plagn PRIVATE include
+                                         include/datagrams
+                                         include/utils)
 # source files added to include dirs
 target_include_directories(plagn PRIVATE src)
