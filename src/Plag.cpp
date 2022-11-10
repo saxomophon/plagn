@@ -18,12 +18,12 @@ void Plag::init()
 
 void Plag::startWorker()
 {
-    m_workerThread = jthread(bind(&loop, this));
+    m_workerThread = std::thread(bind(&Plag::loop, this->m_stopToken));
 }
 
-void Plag::loop(std::stop_token stopToken)
+void Plag::loop(const bool & stopToken)
 {
-    while (!stopToken.stop_requested())
+    while (!stopToken)
     {
         this->loopWork();
     }

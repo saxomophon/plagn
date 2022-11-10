@@ -18,17 +18,17 @@ public:
 
     virtual void startWorker();
 
-    virtual void loop(std::stop_token stopToken);
+    virtual void loop(const bool & stopToken);
 
     virtual void loopWork() = 0;
 
     virtual void placeDatagram(const std::shared_ptr<Datagram> datagram);
 
 protected:
-    std::jthread m_workerThread;
+    std::thread m_workerThread;
 
 private:
-    std::stop_token m_stopToken; //!< central token to stop worker thread
+    bool m_stopToken; //!< central token to stop worker thread
 };
 
 #endif // PLAG_HPP
