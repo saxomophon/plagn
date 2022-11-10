@@ -2,6 +2,7 @@
 #define PLAG_HPP
 
 // std includes
+#include <exception>
 #include <thread>
 
 // own includes
@@ -12,11 +13,13 @@ class Plag : public PlagInterface
 public:
     Plag();
 
-    virtual void readConfig() = 0;
+    void readConfig();
 
     virtual void init();
 
     virtual void startWorker();
+
+    virtual void stopWork();
 
     virtual void loop(const bool & stopToken);
 
@@ -26,8 +29,6 @@ public:
 
 protected:
     std::thread m_workerThread;
-
-private:
     bool m_stopToken; //!< central token to stop worker thread
 };
 

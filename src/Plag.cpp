@@ -11,6 +11,10 @@ Plag::Plag()
     readConfig();
 }
 
+void Plag::readConfig()
+{
+}
+
 void Plag::init()
 {
     // to do nothing should suit most cases
@@ -18,7 +22,12 @@ void Plag::init()
 
 void Plag::startWorker()
 {
-    m_workerThread = std::thread(bind(&Plag::loop, this->m_stopToken));
+    m_workerThread = std::thread(bind(&Plag::loop, this, this->m_stopToken));
+}
+
+void Plag::stopWork()
+{
+    m_stopToken = true;
 }
 
 void Plag::loop(const bool & stopToken)
@@ -26,6 +35,7 @@ void Plag::loop(const bool & stopToken)
     while (!stopToken)
     {
         this->loopWork();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 }
 

@@ -1,0 +1,277 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "windows": {
+        "options": {
+            "shell": {
+                "executable": "cmd.exe",
+                "args": [
+                    "/d",
+                    "/c",
+                    "C:\\Program^ Files^ ^(x86^)\\Microsoft^ Visual^ Studio\\2019\\BuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+                    "&&"
+                ]
+            }
+        }
+    },
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "plagn debug clean",
+            "group": "build",
+            "command": "rm",
+            "problemMatcher": [],
+            "args": [
+                "-r",
+                "*"
+            ],
+            "windows": {
+                "command": "del",
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-debug"
+                },
+                "args": [
+                    "/S",
+                    "/Q",
+                    "CMakeFiles",
+                    "Debug",
+                    "plagn.dir",
+                    "x64",
+                    "*cmake*",
+                    "*.vcx*"
+                ]
+            },
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-debug"
+                }
+            },
+            "osx": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-debug"
+                }
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn debug conf",
+            "group": "build",
+            "command": "cmake",
+            "problemMatcher": [],
+            "windows": {
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-debug"
+                },
+                "args": [
+                    "..",
+                    "-G",
+                    "Visual Studio 16 2019",
+                    "-A",
+                    "x64",
+                    "-DBOOST_ROOT=c:\\boost_1_80_0",
+                    "-DMULTITHREAD_BUILD=ON"
+                ]
+            },
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-debug"
+                },
+                "args": [
+                    "..",
+                    "-GNinja"
+                ]
+            },
+            "osx": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-debug"
+                },
+                "args": [
+                    "..",
+                    "-GNinja",
+                    "-DCMAKE_BUILD_TYPE=Debug "
+                ]
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn debug build",
+            "dependsOn": "plagn debug conf",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "windows": {
+                "problemMatcher": "$msCompile",
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-debug"
+                },
+                "command": "MSBuild",
+                "args": [
+                    "-m",
+                    "-p:Configuration=Debug",
+                    "ALL_BUILD.vcxproj"
+                ]
+            },
+            "linux": {
+                "problemMatcher": "$gcc",
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-debug"
+                },
+                "command": "time",
+                "args": [
+                    "cmake",
+                    "--build",
+                    "."
+                ]
+            },
+            "osx": {
+                "problemMatcher": "$gcc",
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-debug"
+                },
+                "command": "time",
+                "args": [
+                    "cmake",
+                    "--build",
+                    "."
+                ]
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn release clean",
+            "group": "build",
+            "command": "rm",
+            "problemMatcher": [],
+            "args": [
+                "-r",
+                "*"
+            ],
+            "windows": {
+                "command": "del",
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-release"
+                },
+                "args": [
+                    "/S",
+                    "/Q",
+                    "CMakeFiles",
+                    "plagn.dir",
+                    "Release",
+                    "x64",
+                    "*cmake*",
+                    "*.vcx*"
+                ]
+            },
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-release"
+                }
+            },
+            "osx": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-release"
+                }
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn release conf",
+            "group": "build",
+            "command": "cmake",
+            "problemMatcher": [],
+            "windows": {
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-release"
+                },
+                "args": [
+                    "..",
+                    "-G",
+                    "Visual Studio 16 2019",
+                    "-A",
+                    "x64",
+                    "-DBOOST_ROOT=c:\\boost_1_80_0",
+                    "-DMULTITHREAD_BUILD=ON",
+                    "-DCMAKE_TOOLCHAIN_FILE=c:\\vcpkg.cmake"
+                ]
+            },
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-release"
+                },
+                "args": [
+                    "..",
+                    "-GNinja",
+                    "-DCMAKE_TOOLCHAIN_FILE=../../other/vcpkg/scripts/buildsystems/vcpkg.cmake"
+                ]
+            },
+            "osx": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-release"
+                },
+                "args": [
+                    "..",
+                    "-GNinja",
+                    "-DCMAKE_TOOLCHAIN_FILE=../../other/vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "-DCMAKE_BUILD_TYPE=Debug "
+                ]
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn release build",
+            "dependsOn": "plagn release conf",
+            "group": "build",
+            "windows": {
+                "problemMatcher": "$msCompile",
+                "options": {
+                    "cwd": "${workspaceFolder}\\build-win64-release"
+                },
+                "command": "MSBuild",
+                "args": [
+                    "-m",
+                    "-p:Configuration=Release",
+                    "ALL_BUILD.vcxproj"
+                ]
+            },
+            "linux": {
+                "problemMatcher": "$gcc",
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-release"
+                },
+                "command": "time",
+                "args": [
+                    "cmake",
+                    "--build",
+                    "."
+                ]
+            },
+            "osx": {
+                "problemMatcher": "$gcc",
+                "options": {
+                    "cwd": "${workspaceFolder}/build-macOS-release"
+                },
+                "command": "time",
+                "args": [
+                    "cmake",
+                    "--build",
+                    "."
+                ]
+            }
+        },
+        {
+            "type": "shell",
+            "label": "plagn release pack",
+            "dependsOn": "plagn release build",
+            "problemMatcher": [],
+            "group": "build",
+            "linux": {
+                "options": {
+                    "cwd": "${workspaceFolder}/build-linux-release"
+                },
+                "command": "cpack"
+            }
+        }
+    ]
+}

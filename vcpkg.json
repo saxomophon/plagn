@@ -2,6 +2,15 @@
     "name": "plagn",
     "version": "0.0.0",
     "dependencies": [
-        "boost"
+        "boost-asio",
+        "boost-chrono",
+        "boost-core",
+        "boost-date-time",
+        "boost-filesystem",
+        "boost-program-options",
+        "boost-regex",
+        "boost-serialization",
+        "boost-system",
+        "boost-thread"
     ]
 }
