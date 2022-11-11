@@ -21,9 +21,15 @@
 // std includes
 #include <iostream>
 #include <memory>
+#include <string>
+
+// boost incldues
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
 
 // own includes
 #include "PlagUdp.hpp"
+#include "Utilities.hpp"
 
 using namespace std;
 
@@ -32,15 +38,85 @@ bool gotTerminationRequest = false; //!< representing a termination request from
 
 void receiveTermination(int /*unused*/)
 {
-    std::cout << "Received termination!" << endl;
+    cout << "Received termination!" << endl;
     gotTerminationRequest = true;
 }
 
-int main()
+void printVersionToCommandLine()
+{
+    // string topBottomLine = "-------------------------------";
+    // string program = APP_PRODUCT"Plag'n";
+    // program = string("|") + string((topBottomLine.size() - program.size() - 2) / 2, " ")
+    //           + program + string((topBottomLine.size() - program.size() - 2) / 2, " ")
+    //           + string((topBottomLine.size() - program.size() - 2) % 2 == 0 ? "|" : " |");
+    // string version = APP_VERSION;
+    // version = string("|") + string((topBottomLine.size() - version.size() - 2) / 2, " ")
+    //           + version + string((topBottomLine.size() - version.size() - 2) / 2, " ")
+    //           + string((topBottomLine.size() - version.size() - 2) % 2 == 0 ? "|" : " |");
+    // string website = "github.com/saxomophon/plagn/";
+    // website = string("|") + string((topBottomLine.size() - website.size() - 2) / 2, " ")
+    //           + website + string((topBottomLine.size() - website.size() - 2) / 2, " ")
+    //           + string((topBottomLine.size() - website.size() - 2) % 2 == 0 ? "|" : " |");
+    // string copyright = APP_COPYRIGHT;
+    // copyright = string("|") + string((topBottomLine.size() - copyright.size() - 2) / 2, " ")
+    //             + copyright + string((topBottomLine.size() - copyright.size() - 2) / 2, " ")
+    //             + string((topBottomLine.size() - copyright.size() - 2) % 2 == 0 ? "|" : " |");
+    
+    // cout << topBottomLine << endl;
+    // cout << "|   This program is called:   |" << endl;
+    // cout << program << endl;
+    // cout << "|" << string(topBottomLine.size(), " ") << "|" << endl;
+    // cout << "|       Its version is        |" << endl;
+    // cout << version << endl;
+    // cout << "|" << string(topBottomLine.size(), " ") << "|" << endl;
+    // cout << "| It's provided under license |" << endl;
+    // cout << copyright << endl;
+    // cout << "|" << string(topBottomLine.size(), " ") << "|" << endl;
+    // cout << "|     Find out more under     |" << endl;
+    // cout << topBottomLine << endl;
+    cout << "-------------------------------" << endl;
+    cout << "|   This program is called:   |" << endl;
+    cout << "|          Plag'n             |" << endl;
+    cout << "|                             |" << endl;
+    cout << "|       Its version is        |" << endl;
+    cout << "|            0.0.1            |" << endl;
+    cout << "|                             |" << endl;
+    cout << "| It's provided under license |" << endl;
+    cout << "|          LGPL v2.1          |" << endl;
+    cout << "|                             |" << endl;
+    cout << "|     Find out more under     |" << endl;
+    cout << "| github.com/saxomophon/plagn/|" << endl;
+    cout << "-------------------------------" << endl;
+}
+
+int main(int argc, char * argv[])
 {
     cout << "Hello World!" << endl;
 
+    printVersionToCommandLine();
+
+    string configFilePath = "";
+    cout << "options:" << endl;
+    for (int i = 0; i < argc; i++)
+    {
+        cout << argv[i] << endl;
+    }
+    if (argc == 2)
+    {
+        configFilePath = string(argv[1]);
+    }
+    if (configFilePath == "") configFilePath = plagn::DEFAULT_CONFIG_PATH;
+    cout << "Using config file: \"" << configFilePath << "\"" << endl;
+
     // phase of construction an file reads
+
+    // reading the file
+    
+    boost::property_tree::ptree propertyTree;
+    boost::property_tree::ini_parser::read_ini(configFilePath, propertyTree);
+
+    // constructing the Plags
+    
     shared_ptr<Plag> testPlag(new PlagUdp("testPlag", 1));
 
     // init phase

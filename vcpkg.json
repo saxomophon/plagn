@@ -8,6 +8,7 @@
         "boost-date-time",
         "boost-filesystem",
         "boost-program-options",
+        "boost-property-tree",
         "boost-regex",
         "boost-serialization",
         "boost-system",

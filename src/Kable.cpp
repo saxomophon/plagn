@@ -94,6 +94,7 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram)
         cout << "Nothing to do here!" << endl;
         return nullptr;
     }
+    return nullptr;
 }
 
 /**

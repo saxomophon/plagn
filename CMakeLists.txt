@@ -10,7 +10,7 @@ set(APP_VERSION_MAJOR "0")
 # next one will be changed, when a conifuguration incompatibility occurs
 set(APP_VERSION_MINOR "0")
 # this will increase every time something changes
-set(APP_VERSION_BUILD "0")
+set(APP_VERSION_BUILD "1")
 
 # prepare infos for the details section of the executable
 set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_BUILD}")
