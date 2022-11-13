@@ -11,14 +11,10 @@
             "cwd": "${workspaceFolder}/run",
             "stopAtEntry": false,
             "environment": [],
-            "externalConsole": false,
+            "console": false,
             "type": "cppdbg",
             "program": "${workspaceFolder}/build-linux-debug/plagn",
             "windows": {
-                "args": [
-                    "--childproc"
-                ],
-                "externalConsole": true,
                 "type": "cppvsdbg",
                 "program": "${workspaceFolder}\\build-win64-debug\\Debug\\plagn.exe"
             },

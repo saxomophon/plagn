@@ -1,7 +1,9 @@
 .DS_Store
 build*/
+run/
 *.user
 CMake*
 Makefile
+vcpkg/
 vcpkg_installed/
 *.log
