@@ -1,0 +1,18 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/.",
+    "cmake.configureOnOpen": true,
+    "cmake.configureSettings": {
+        "CMAKE_TOOLCHAIN_FILE": "C:/dev/vcpkg/scripts/buildsystems/vcpkg.cmake",
+        "CMAKE_INSTALL_PREFIX": "./install"
+    },
+    "C_Cpp.vcFormat.indent.preserveWithinParentheses": true,
+    "C_Cpp.vcFormat.space.beforeBlockOpenBrace": false,
+    "C_Cpp.vcFormat.space.insertAfterSemicolon": true,
+    "C_Cpp.vcFormat.space.pointerReferenceAlignment": "center",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.block": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.function": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.lambda": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.namespace": "newLine",
+    "C_Cpp.vcFormat.newLine.beforeOpenBrace.type": "newLine",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
+}

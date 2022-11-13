@@ -1,12 +1,12 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file PlagInterface.cpp
+ * @file DatagramUdp.hpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
  * @contributors:
- * @brief Implements the PlagInterface class' non-abstract functions
+ * @brief Holds the DatagramUdp class
  * @version 0.1
- * @date 2022-05-20
- *
+ * @date 2022-11-13
+ * 
  * @copyright LGPL v2.1
  *
  * Targets of chosen license for:
@@ -19,27 +19,27 @@
  *
  */
 
-// self include
-#include "PlagInterface.hpp"
+#ifndef DATAGRAMUDP_HPP
+#define DATAGRAMUDP_HPP
 
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief Construct a new Plag Interface:: Plag Interface object
- * 
- * @param type type of Plag
- */
-PlagInterface::PlagInterface(PlagType type) :
-    m_type(type)
-{
-}
+// std includes
 
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief simple getter
- * 
- * @return PlagType 
- */
-PlagType PlagInterface::getType() const
+// own includes
+#include "Datagram.hpp"
+
+class DatagramUdp : public Datagram
 {
-    return m_type;
-}
+public:
+    DatagramUdp();
+
+    virtual std::string toString() const;
+
+
+private:
+    std::string m_sender;   //!< identification of sender (most likely IP) as a string
+    std::string m_receiver; //!< identification of receiver (most likely IP) as a string
+    uint16_t m_port;        //!< port of the UDP interaction
+    std::string m_payload;  //!< content of the UDP
+};
+
+#endif // DATAGRAMUDP_HPP

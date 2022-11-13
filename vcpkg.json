@@ -1,0 +1,17 @@
+{
+    "name": "plagn",
+    "version": "0.0.0",
+    "dependencies": [
+        "boost-asio",
+        "boost-chrono",
+        "boost-core",
+        "boost-date-time",
+        "boost-filesystem",
+        "boost-program-options",
+        "boost-property-tree",
+        "boost-regex",
+        "boost-serialization",
+        "boost-system",
+        "boost-thread"
+    ]
+}

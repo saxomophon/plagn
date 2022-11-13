@@ -1,11 +1,11 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file PlagInterface.cpp
+ * @file Utilities.cpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
  * @contributors:
- * @brief Implements the PlagInterface class' non-abstract functions
+ * @brief Implementation of utility functions
  * @version 0.1
- * @date 2022-05-20
+ * @date 2022-11-11
  *
  * @copyright LGPL v2.1
  *
@@ -20,26 +20,12 @@
  */
 
 // self include
-#include "PlagInterface.hpp"
+#include "Utilities.hpp"
 
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief Construct a new Plag Interface:: Plag Interface object
- * 
- * @param type type of Plag
- */
-PlagInterface::PlagInterface(PlagType type) :
-    m_type(type)
-{
-}
+using namespace std;
 
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief simple getter
- * 
- * @return PlagType 
- */
-PlagType PlagInterface::getType() const
-{
-    return m_type;
-}
+#ifdef _WIN32
+const string plagn::DEFAULT_CONFIG_PATH = "./plagn.conf";
+#else
+const string plagn::DEFAULT_CONFIG_PATH = "/usr/etc/plagn.conf";
+#endif
