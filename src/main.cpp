@@ -150,6 +150,7 @@ int main(int argc, char * argv[])
         atLeastOneThreadRunning = false;
         // test for all threads
         if (true /*insert test on Plag if still working*/) atLeastOneThreadRunning = true;
+        this_thread::sleep_for(chrono::milliseconds(1));
     }
 
     // stopping phase
