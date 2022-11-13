@@ -67,7 +67,7 @@ public:
 
     virtual void loop(const bool & stopToken);
 
-    virtual void loopWork() = 0;
+    virtual bool loopWork() = 0;
 
     virtual void placeDatagram(const std::shared_ptr<Datagram> datagram);
 

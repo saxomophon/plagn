@@ -45,7 +45,7 @@ public:
 
     virtual void init();
 
-    virtual void loopWork();
+    virtual bool loopWork();
 
     virtual void placeDatagram(const std::shared_ptr<Datagram> datagram);
 

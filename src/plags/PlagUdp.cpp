@@ -86,10 +86,10 @@ void PlagUdp::init() try
     m_socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
     m_socket.set_option(boost::asio::socket_base::broadcast(true));
 
-    m_socket.bind(m_endPoint);
-    
     m_endPoint.address(boost::asio::ip::address_v4::from_string("0.0.0.0"));
     m_endPoint.port(4004);
+    
+    m_socket.bind(m_endPoint);
 }
 catch (exception & e)
 {
@@ -104,12 +104,12 @@ catch (exception & e)
  * @brief PlagUdp::loopWork regularly reads on the socket, if data popped in or sends data
  * 
  */
-void PlagUdp::loopWork() try
+bool PlagUdp::loopWork() try
 {
     // receive what can be received
     if (m_socket.available() > 0)
     {
-        char recvBuff[1024] = {0};
+        char recvBuff[1024] = { 0 };
         boost::asio::ip::udp::endpoint senderEndpoint;
         
         // receive available data
@@ -121,12 +121,17 @@ void PlagUdp::loopWork() try
             
             cout << "Got data: " << data << endl;
         }
+        return true;
+    }
+    else
+    {
+        return false;
     }
 }
 catch (exception & e)
 {
     string errorMsg = e.what();
-    errorMsg += "\nSomething happened during PlagUdo::loopWork()";
+    errorMsg += "\nSomething happened during PlagUdp::loopWork()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
 }

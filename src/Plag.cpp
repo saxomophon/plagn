@@ -21,6 +21,7 @@
 
 // std includes
 #include <iostream>
+#include <functional>
 
 // self include
 #include "Plag.hpp"
@@ -35,10 +36,12 @@ using namespace std;
  * @sa Plag::readConfig()
  *
  */
-Plag::Plag(const std::string & name, const uint64_t & id, PlagType type) :
+Plag::Plag(const string & name, const uint64_t & id, PlagType type) :
     PlagInterface(type),
     m_name(name),
-    m_plagId(id)
+    m_plagId(id),
+    m_workerThread(),
+    m_stopToken(false)
 {
     readConfig();
 }
@@ -76,7 +79,7 @@ void Plag::init()
  */
 void Plag::startWorker()
 {
-    m_workerThread = std::thread(bind(&Plag::loop, this, this->m_stopToken));
+    m_workerThread = thread(bind(&Plag::loop, this, this->m_stopToken));
 }
 
 /**
@@ -92,8 +95,9 @@ void Plag::stopWork()
 /**
  *-------------------------------------------------------------------------------------------------
  * @brief loop is the regular main thread's execution envelop. It runs indefinetly, calls loopWork()
- * - an abstract method defined by each subclass - and sleeps for a millisecond afterwards. This
- * indefinite loop can be broken by setting the @p stopToken to true
+ * - an abstract method defined by each subclass - and sleeps for a millisecond afterwards if
+ * loopWork() reported idleness by returning false.
+ * This indefinite loop can be broken by setting the @p stopToken to true
  *
  * @param stopToken a reference to a boolean, that indicates whether to stop the process (=true) or
  * continue the loop (=false)
@@ -102,8 +106,11 @@ void Plag::loop(const bool & stopToken)
 {
     while (!stopToken)
     {
-        this->loopWork();
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        if (!this->loopWork())
+        {
+            // no more work to do - worker is idle
+            this_thread::sleep_for(chrono::milliseconds(1));
+        }
     }
 }
 
@@ -114,7 +121,7 @@ void Plag::loop(const bool & stopToken)
  *
  * @param datagram A Datagram containing data for this Plag to interprete
  */
-void Plag::placeDatagram(const std::shared_ptr<Datagram> datagram)
+void Plag::placeDatagram(const shared_ptr<Datagram> datagram)
 {
     if (datagram)
     {
