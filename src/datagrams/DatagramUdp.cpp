@@ -1,11 +1,11 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file PlagInterface.cpp
+ * @file DatagramUdp.cpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
- * @contributors:
- * @brief Implements the PlagInterface class' non-abstract functions
+ * @contributors: 
+ * @brief Implementation of the DatagramUdp class
  * @version 0.1
- * @date 2022-05-20
+ * @date 2022-11-13
  *
  * @copyright LGPL v2.1
  *
@@ -20,26 +20,34 @@
  */
 
 // self include
-#include "PlagInterface.hpp"
+#include "DatagramUdp.hpp"
+
+using namespace std;
 
 /**
  *-------------------------------------------------------------------------------------------------
- * @brief Construct a new Plag Interface:: Plag Interface object
+ * @brief Construct a new Datagram:: Datagram object sets member values
  * 
- * @param type type of Plag
+ * @param sourcePlag the origin of this Datagram
  */
-PlagInterface::PlagInterface(PlagType type) :
-    m_type(type)
+DatagramUdp::DatagramUdp() :
+    Datagram()
 {
 }
 
 /**
  *-------------------------------------------------------------------------------------------------
- * @brief simple getter
+ * @brief creates a string representation of this Datagram
  * 
- * @return PlagType 
+ * @return string 
  */
-PlagType PlagInterface::getType() const
+string DatagramUdp::toString() const
 {
-    return m_type;
+    string stringRepresentation = Datagram::toString();
+    stringRepresentation += "{UDP info: sender: " + m_sender;
+    stringRepresentation += "; receiver: " + m_receiver;
+    stringRepresentation += "; port: " + to_string(m_port);
+    stringRepresentation += "; payload: " + m_payload;
+    stringRepresentation += "}";
+    return stringRepresentation;
 }

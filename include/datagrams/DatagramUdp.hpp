@@ -1,12 +1,12 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file Utilities.hpp
+ * @file DatagramUdp.hpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
  * @contributors:
- * @brief Utility functions and general utilities collection
+ * @brief Holds the DatagramUdp class
  * @version 0.1
- * @date 2022-11-11
- *
+ * @date 2022-11-13
+ * 
  * @copyright LGPL v2.1
  *
  * Targets of chosen license for:
@@ -19,23 +19,27 @@
  *
  */
 
-#ifndef UTILITIES_HPP
-#define UTILITIES_HPP
+#ifndef DATAGRAMUDP_HPP
+#define DATAGRAMUDP_HPP
 
 // std includes
-#include <string>
 
-namespace plagn
+// own includes
+#include "Datagram.hpp"
+
+class DatagramUdp : public Datagram
 {
-/**
- * -------------------------------------------------------------------------------------------------
- * @brief The default path where plagn will search for a configuration file, if no explicit path
- * is specified
- * @note This path is OS dependant.
- */
-    extern const std::string DEFAULT_CONFIG_PATH;
-}
+public:
+    DatagramUdp();
+
+    virtual std::string toString() const;
 
 
+private:
+    std::string m_sender;   //!< identification of sender (most likely IP) as a string
+    std::string m_receiver; //!< identification of receiver (most likely IP) as a string
+    uint16_t m_port;        //!< port of the UDP interaction
+    std::string m_payload;  //!< content of the UDP
+};
 
-#endif // UTILITIES_HPP
+#endif // DATAGRAMUDP_HPP

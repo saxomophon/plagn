@@ -2,11 +2,12 @@
  *-------------------------------------------------------------------------------------------------
  * @file Utilities.cpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
+ * @contributors:
  * @brief Implementation of utility functions
  * @version 0.1
  * @date 2022-11-11
  *
- * @copyright Copyright (c) 2022, licensed unter LGPL v2.1
+ * @copyright LGPL v2.1
  *
  * Targets of chosen license for:
  *      Users    : Please be so kind as to indicate your usage of this library by linking to the project

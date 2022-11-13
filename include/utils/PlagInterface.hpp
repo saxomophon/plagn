@@ -2,11 +2,12 @@
  *-------------------------------------------------------------------------------------------------
  * @file PlagInterface.hpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
+ * @contributors: 
  * @brief Holds the PlagInterface class and the PlagType enum
  * @version 0.1
  * @date 2022-05-20
  *
- * @copyright Copyright (c) 2022, licensed unter LGPL v2.1
+ * @copyright LGPL v2.1
  *
  * Targets of chosen license for:
  *      Users    : Please be so kind as to indicate your usage of this library by linking to the project
