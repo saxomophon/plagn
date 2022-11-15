@@ -1,14 +1,26 @@
 # How to contribute
 
-Currently, developing is the only way to contribute. This might or might not change. So start of by [building Plag'n on your machine](## How to build).
+Currently, developing is the only way to contribute. This might or might not change. So start off by [building Plag'n on your machine](./README.md#How_to_build).
 
-When starting to code, make sure to follow the [style guide](## Style guide), please.
+When starting to code, make sure to follow the [style guide](./README.md#Style_guide), please.
 
 [_TOC_]
 
 ## How to build
 
-<Stuff from Jost goes here>
+### IDE: vscode?
+
+We develop this project using vscode and therefore have included the workspace setup for it in this repository.
+
+If you know what you are doing, you are of course free to use whatever tools you like (e.g. QtCreator or whatever).
+
+### Setting up your build environment
+
+[Instructions for Windows](./buildWindows.md)
+
+[Instructions for Linux (to be created)](./BuildLinux.md)
+
+[Instructions for MacOS (to be created)](./BuildMacOS.md)
 
 ## Style guide
 

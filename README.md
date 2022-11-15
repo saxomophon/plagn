@@ -22,16 +22,3 @@ Yes. That is partly why LGPL was chosen. Note however, that you're the one respo
 :warning: LGPL was also chosen, because it provides the ability to use GPL libraries. These are usually not fine with commercial use. So be sure, to exclude libraries and Plags, that use GPL libraries.\
 Current usage of GPL libraries: **0**.
 
-### IDE: vscode?
-
-We develop this project using vscode and therefore have included the workspace setup for it in this repository.
-
-If you know what you are doing, you are of course free to use whatever tools you like (e.g. QtCreator or whatever).
-
-### Setting up your build environment
-
-[Instructions for Windows](./BuildWindows.md)
-
-[Instructions for Linux (to be created)](./BuildLinux.md)
-
-[Instructions for MacOS (to be created)](./BuildMacOS.md)
