@@ -1,6 +1,6 @@
 ## Prepare dependencies
 
-Run `bootstrap.sh`. (Work in progress...)
+Run `bootstrap.sh`.
 
 ***OR***
 

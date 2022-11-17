@@ -31,13 +31,13 @@
 class Datagram
 {
 public:
-    Datagram();
+    Datagram(const std::string & sourceName);
 
     virtual std::string toString() const;
 
 
 private:
-    uint64_t m_ownId;                                                       //!< generated unique DatagramId
+    std::string m_ownId;                                                       //!< generated unique DatagramId
     uint64_t m_sourceDatagramId;                                            //!< id of Datagram this was translated from (if new: 0)
     std::chrono::time_point<std::chrono::steady_clock> m_timeOfCreation;    //!< time this Datagram was created
 

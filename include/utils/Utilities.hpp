@@ -36,6 +36,8 @@ namespace plagn
     extern const std::string DEFAULT_CONFIG_PATH;
 }
 
+std::string getTimeAsUtcIsoStr(const std::time_t & timePoint);
+
 
 
 #endif // UTILITIES_HPP

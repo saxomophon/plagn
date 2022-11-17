@@ -19,6 +19,12 @@
  *
  */
 
+// openssl includes
+#include <openssl/evp.h>
+
+// own includes
+#include "Utilities.hpp"
+
 // self include
 #include "Datagram.hpp"
 
@@ -28,14 +34,45 @@ using namespace std;
  *-------------------------------------------------------------------------------------------------
  * @brief Construct a new Datagram:: Datagram object sets member values
  * 
- * @param sourcePlag the origin of this Datagram
+ * @param sourceName the name of the Plag, which created this Datagram
  */
-Datagram::Datagram() :
+Datagram::Datagram(const string & sourceName) :
     m_sourceDatagramId(0),
     m_timeOfCreation(std::chrono::steady_clock::now())
 {
     //TODO: create a unique hash of some sort
-    m_ownId = 0;
+    string nowStr;
+    nowStr = getTimeAsUtcIsoStr(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+    string feedFeed = sourceName + to_string(m_sourceDatagramId);
+    uint32_t remainder;
+    std::chrono::microseconds sinceEpoch;
+    sinceEpoch = std::chrono::duration_cast<std::chrono::microseconds>(m_timeOfCreation.time_since_epoch());
+    remainder = sinceEpoch.count() % 1000000;
+    feedFeed += nowStr;
+    feedFeed += to_string(remainder);
+
+    const unsigned char * feed = reinterpret_cast<const unsigned char *>(feedFeed.c_str());
+
+    // creating a unique identifier hash using openssl's evp
+    EVP_MD_CTX * md5Context;
+    unsigned char * md5Result;
+    unsigned int md5ResultLength = EVP_MD_size(EVP_md5());
+
+    // MD5_Init
+    md5Context = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(md5Context, EVP_md5(), nullptr);
+
+    // MD5_Update
+    EVP_DigestUpdate(md5Context, feed, feedFeed.size());
+
+    // MD5_Final
+    md5Result = reinterpret_cast<unsigned char *>(OPENSSL_malloc(md5ResultLength));
+    EVP_DigestFinal_ex(md5Context, md5Result, &md5ResultLength);
+    EVP_MD_CTX_free(md5Context);
+
+    m_ownId = string(reinterpret_cast<char *>(md5Result));
+
+    //cout << "My ID is " << m_ownId << endl;
 }
 
 /**
@@ -49,10 +86,10 @@ string Datagram::toString() const
     string stringRepresentation = "Datagram{";
     if (m_sourceDatagramId > 0) stringRepresentation += "generated from: "
                                                         + to_string(m_sourceDatagramId);
-    if (m_sourceDatagramId == 0) "; newly generated";
+    if (m_sourceDatagramId == 0) stringRepresentation += "; newly generated";
     //TODO: string representation of time
     //stringRepresentation += ";at " + to_string(m_timeOfCreation);
-    stringRepresentation += "; with id " + to_string(m_ownId);
+    stringRepresentation += "; with id " + m_ownId;
     stringRepresentation += "}";
     return stringRepresentation;
 }

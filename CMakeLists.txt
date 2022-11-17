@@ -20,6 +20,11 @@ set(APP_COPYRIGHT "LGPL v2.1")
 # setting up the project
 project(plagn VERSION ${APP_VERSION} LANGUAGES CXX)
 
+# openssl stuff
+find_package(OpenSSL REQUIRED SSL Crypto)
+include_directories(${OPENSSL_INCLUDE_DIR})
+set(LIBS ${LIBS} ${OPENSSL_LIBRARIES})
+
 # boost stuff
 set(Boost_USE_STATIC_LIBS       ON)
 set(Boost_USE_MULTITHREADED     ON)
@@ -43,3 +48,6 @@ target_include_directories(plagn PRIVATE include
                                          include/plags)
 # source files added to include dirs
 target_include_directories(plagn PRIVATE src)
+
+# link library collection
+target_link_libraries(plagn ${LIBS})

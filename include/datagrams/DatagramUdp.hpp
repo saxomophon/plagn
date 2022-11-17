@@ -30,7 +30,7 @@
 class DatagramUdp : public Datagram
 {
 public:
-    DatagramUdp();
+    DatagramUdp(std::string sourcePlag);
 
     virtual std::string toString() const;
 

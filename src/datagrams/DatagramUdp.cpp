@@ -30,8 +30,8 @@ using namespace std;
  * 
  * @param sourcePlag the origin of this Datagram
  */
-DatagramUdp::DatagramUdp() :
-    Datagram()
+DatagramUdp::DatagramUdp(string sourcePlag) :
+    Datagram(sourcePlag)
 {
 }
 
