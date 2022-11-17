@@ -18,9 +18,9 @@ If you know what you are doing, you are of course free to use whatever tools you
 
 [Instructions for Windows](./buildWindows.md)
 
-[Instructions for Linux (to be created)](./BuildLinux.md)
+[Instructions for Linux (to be created)](./buildLinux.md)
 
-[Instructions for MacOS (to be created)](./BuildMacOS.md)
+[Instructions for MacOS (to be created)](./buildMacOS.md)
 
 ## Style guide
 
