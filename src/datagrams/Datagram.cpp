@@ -77,6 +77,56 @@ Datagram::Datagram(const string & sourceName) :
 
 /**
  *-------------------------------------------------------------------------------------------------
+ * @brief method to access data of Datagram under just one name
+ * 
+ * @param key reference name of the value to access
+ * @return DataType 
+ */
+DataType Datagram::getData(const string & key) const
+{
+    if ((startsWith('\"', key) && endsWith('\"', key)) || isDigit(key.front())) // reading a literal
+    {
+        if (isDigit(key.front()))
+        {
+            return key;
+        }
+        return key.substr(1, key.size() - 2);
+    }
+    else if (key == string("uuid"))
+    {
+        return m_ownId;
+    }
+    else if (key == string("sourceDatagramId"))
+    {
+        return m_sourceDatagramId;
+    }
+    else
+    {
+        throw std::invalid_argument(string("Invalid key \"") + key + "\"");
+    }
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief method to write data of Datagram under just one name
+ *
+ * @param key reference name of the value to override
+ * @param value value to bet set for member accssible by @p key
+ */
+void Datagram::setData(const string & key, const DataType & value)
+{
+    if (key == string("sourceDatagramId"))
+    {
+        m_sourceDatagramId = get<uint64_t>(value);
+    }
+    else
+    {
+        throw std::invalid_argument(string("Invalid key \"") + key + "\"");
+    }
+} 
+
+/**
+ *-------------------------------------------------------------------------------------------------
  * @brief creates a string representation of this message
  * 
  * @return string 

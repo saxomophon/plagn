@@ -24,17 +24,21 @@
 
 // std includes
 #include <chrono>
-#include <string>
+//#include <string> <- included via Utilities.hpp
 
 // own includes
+#include "Utilities.hpp"
 
 class Datagram
 {
 public:
     Datagram(const std::string & sourceName);
 
-    virtual std::string toString() const;
+    virtual DataType getData(const std::string & key) const;
 
+    virtual void setData(const std::string & key, const DataType & value);
+
+    virtual std::string toString() const;
 
 private:
     std::string m_ownId;                                                       //!< generated unique DatagramId
