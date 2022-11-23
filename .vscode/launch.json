@@ -32,7 +32,7 @@
                 "sudo": true
             },
             "osx": {
-                "args": [],
+                "args": ["../docs/config/exampleConf.conf"],
                 "MIMode": "lldb",
                 "program": "${workspaceFolder}/build-macOS-debug/plagn"
             }

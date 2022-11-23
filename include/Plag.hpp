@@ -28,8 +28,9 @@
 #include <vector>
 
 // own includes
-#include "utils/PlagInterface.hpp"
 #include "Kable.hpp"
+#include "utils/PlagInterface.hpp"
+#include "utils/PropertyTreeReader.hpp"
 
 /**
  *-------------------------------------------------------------------------------------------------
@@ -52,12 +53,13 @@
  * @sa Kable::Kable()
  *
  */
-class Plag : public PlagInterface
+class Plag : public PlagInterface, public PropertyTreeReader
 {
 public:
-    Plag(const std::string & name, const uint64_t & id, PlagType type = PlagType::none);
+    Plag(const boost::property_tree::ptree & propTree,
+         const std::string & name, const uint64_t & id, PlagType type = PlagType::none);
 
-    void readConfig();
+    virtual void readConfig();
 
     virtual void init();
 
@@ -75,7 +77,7 @@ private:
     void distribute();
 
 protected:
-    std::string m_name;         //!< name (descriptive, non-unique if the user desires)
+    std::string m_name;         //!< name (descriptive, needs to be unique)
     uint64_t m_plagId;          //!< id of the Plag (unique identifier)
     std::thread m_workerThread; //!< thread to run the communications department (=main thread)
     bool m_stopToken;           //!< central token to stop worker thread

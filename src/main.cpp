@@ -77,7 +77,7 @@ void printVersionToCommandLine()
     // cout << topBottomLine << endl;
     cout << "-------------------------------" << endl;
     cout << "|   This program is called:   |" << endl;
-    cout << "|          Plag'n             |" << endl;
+    cout << "|           Plag'n            |" << endl;
     cout << "|                             |" << endl;
     cout << "|       Its version is        |" << endl;
     cout << "|            0.0.1            |" << endl;
@@ -86,7 +86,7 @@ void printVersionToCommandLine()
     cout << "|          LGPL v2.1          |" << endl;
     cout << "|                             |" << endl;
     cout << "|     Find out more under     |" << endl;
-    cout << "| github.com/saxomophon/plagn/|" << endl;
+    cout << "| github.com/saxomophon/plagn |" << endl;
     cout << "-------------------------------" << endl;
 }
 
@@ -117,14 +117,42 @@ int main(int argc, char * argv[])
     boost::property_tree::ini_parser::read_ini(configFilePath, propertyTree);
 
     // constructing the Plags
+    map<string, shared_ptr<Plag>> allPlags;
+    bool stillHasPlugs = true;
+    string plagKey;
+    size_t index = 1;
+    do
+    {
+        plagKey = string("plag") + to_string(index);
+        stillHasPlugs = (propertyTree.find(plagKey) != propertyTree.not_found());
+        if (stillHasPlugs)
+        {
+            string type = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "type");
+            string name = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "name");
+            cout << "Found Plag at index " << index << " with type " << type << " and name " << name << endl;
+            if (type == "udp")
+            {
+                shared_ptr<Plag> sharedPlag(new PlagUdp(propertyTree, name, index));
+                allPlags.insert_or_assign(name, sharedPlag);
+            }
+            index++;
+        }
+    } while (stillHasPlugs);
+
+    for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
+    {
+        plagEntry.second->readConfig();
+    }
     
-    shared_ptr<Plag> testPlag(new PlagUdp("testPlag", 1));
 
     // init phase
 
     bool atLeastOneThreadRunning = true;
 
-    testPlag->init();
+    for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
+    {
+        plagEntry.second->init();
+    }
 
     // event Handling:
 #ifdef _WIN32
@@ -141,9 +169,11 @@ int main(int argc, char * argv[])
     sigaction(SIGINT, &externalCancelEvent, nullptr);  // register signal for interruption bash ctrl+c
 #endif
 
-    // running phase
-
-    testPlag->startWorker();
+    // running phass
+    for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
+    {
+        plagEntry.second->startWorker();
+    }
 
     while (atLeastOneThreadRunning && !gotTerminationRequest)
     {
@@ -154,7 +184,10 @@ int main(int argc, char * argv[])
     }
 
     // stopping phase
-    testPlag->stopWork();
+    for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
+    {
+        plagEntry.second->stopWork();
+    }
 
     cout << "Done. See you World!" << endl;
 

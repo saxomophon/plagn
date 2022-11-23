@@ -38,7 +38,8 @@
 class PlagUdp : public Plag
 {
 public:
-    PlagUdp(const std::string & name, const uint64_t & id);
+    PlagUdp(const boost::property_tree::ptree & propTree,
+            const std::string & name, const uint64_t & id);
     ~PlagUdp();
 
     virtual void readConfig();
@@ -52,6 +53,9 @@ public:
 protected:
 
 private:
+    // config parameters
+    std::string m_ip;   //!< ip the endpoint should bind to
+    uint16_t m_port;    //!< port the endpoint should bind to
     // to correctly interprete the following members, see the boost documentation
     boost::asio::io_context m_ioContext;            //!< member of boost necessity for ease of use
     boost::asio::ip::udp::socket m_socket;          //!< member of boost necessity for ease of use

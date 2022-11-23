@@ -32,8 +32,9 @@ using namespace std;
  * @brief Construct a new Plag Udp:: Plag Udp object assigns default values
  * 
  */
-PlagUdp::PlagUdp(const std::string & name, const uint64_t & id) :
-    Plag(name, id, PlagType::UDP),
+PlagUdp::PlagUdp(const boost::property_tree::ptree & propTree,
+                 const std::string & name, const uint64_t & id) :
+    Plag(propTree, name, id, PlagType::UDP),
     m_socket(m_ioContext),
     m_resolver(m_ioContext)
 {
@@ -63,6 +64,9 @@ PlagUdp::~PlagUdp()
 
 void PlagUdp::readConfig() try
 {
+    m_ip = getParameter<string>("ip");
+    m_port = getParameter<uint16_t>("port");
+    cout << getParameter<string>("ip")  << " | " << getParameter<unsigned int>("port") << endl;
 }
 catch (exception & e)
 {
@@ -86,8 +90,8 @@ void PlagUdp::init() try
     m_socket.set_option(boost::asio::ip::udp::socket::reuse_address(true));
     m_socket.set_option(boost::asio::socket_base::broadcast(true));
 
-    m_endPoint.address(boost::asio::ip::address_v4::from_string("0.0.0.0"));
-    m_endPoint.port(4004);
+    m_endPoint.address(boost::asio::ip::address_v4::from_string(m_ip));
+    m_endPoint.port(m_port);
     
     m_socket.bind(m_endPoint);
 }

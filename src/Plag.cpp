@@ -36,8 +36,10 @@ using namespace std;
  * @sa Plag::readConfig()
  *
  */
-Plag::Plag(const string & name, const uint64_t & id, PlagType type) :
+Plag::Plag(const boost::property_tree::ptree & propTree,
+           const string & name, const uint64_t & id, PlagType type) :
     PlagInterface(type),
+    PropertyTreeReader(propTree, string("plag") + to_string(id)),
     m_name(name),
     m_plagId(id),
     m_workerThread(),
