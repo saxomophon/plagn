@@ -82,7 +82,7 @@ Datagram::Datagram(const string & sourceName) :
  * @param key reference name of the value to access
  * @return DataType 
  */
-DataType Datagram::getData(const string & key) const
+DataType Datagram::getData(const string & key) const try
 {
     if ((startsWith('\"', key) && endsWith('\"', key)) || isDigit(key.front())) // reading a literal
     {
@@ -105,6 +105,10 @@ DataType Datagram::getData(const string & key) const
         throw std::invalid_argument(string("Invalid key \"") + key + "\"");
     }
 }
+catch (exception & e)
+{
+    throw std::runtime_error(string("Datagram::getData(): ") + e.what());
+}
 
 /**
  *-------------------------------------------------------------------------------------------------
@@ -113,7 +117,7 @@ DataType Datagram::getData(const string & key) const
  * @param key reference name of the value to override
  * @param value value to bet set for member accssible by @p key
  */
-void Datagram::setData(const string & key, const DataType & value)
+void Datagram::setData(const string & key, const DataType & value) try
 {
     if (key == string("sourceDatagramId"))
     {
@@ -123,7 +127,11 @@ void Datagram::setData(const string & key, const DataType & value)
     {
         throw std::invalid_argument(string("Invalid key \"") + key + "\"");
     }
-} 
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Datagram::setData(): ") + e.what());
+}
 
 /**
  *-------------------------------------------------------------------------------------------------
@@ -131,7 +139,7 @@ void Datagram::setData(const string & key, const DataType & value)
  * 
  * @return string 
  */
-string Datagram::toString() const
+string Datagram::toString() const try
 {
     string stringRepresentation = "Datagram{";
     if (m_sourceDatagramId > 0) stringRepresentation += "generated from: "
@@ -142,6 +150,10 @@ string Datagram::toString() const
     stringRepresentation += "; with id " + m_ownId;
     stringRepresentation += "}";
     return stringRepresentation;
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Datagram::toString(): ") + e.what());
 }
 
 

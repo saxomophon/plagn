@@ -31,8 +31,82 @@ using namespace std;
  * @param sourcePlag the origin of this Datagram
  */
 DatagramUdp::DatagramUdp(string sourcePlag) :
-    Datagram(sourcePlag)
+    Datagram(sourcePlag),
+    m_sender("this"),
+    m_receiver("this"),
+    m_port(0),
+    m_payload("")
 {
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief method to access data of Datagram under just one name
+ *
+ * @param key reference name of the value to access
+ * @return DataType
+ */
+DataType DatagramUdp::getData(const string & key) const try
+{
+    if (key == string("sender"))
+    {
+        return m_sender;
+    }
+    else if (key == string("receiver"))
+    {
+        return m_receiver;
+    }
+    else if (key == string("port"))
+    {
+        return m_port;
+    }
+    else if (key == string("payload"))
+    {
+        return m_payload;
+    }
+    else // use base class implementation
+    {
+        return Datagram::getData(key);
+    }
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("DatagramUdp::getData() ") + e.what());
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief method to write data of Datagram under just one name
+ *
+ * @param key reference name of the value to override
+ * @param value value to bet set for member accssible by @p key
+ */
+void DatagramUdp::setData(const string & key, const DataType & value) try
+{
+    if (key == string("sender"))
+    {
+        m_sender = get<string>(value);
+    }
+    else if (key == string("receiver"))
+    {
+        m_receiver = get<string>(value);
+    }
+    else if (key == string("port"))
+    {
+        m_port = get<unsigned int>(value);
+    }
+    else if (key == string("payload"))
+    {
+        m_payload = get<string>(value);
+    }
+    else // use base class implementation
+    {
+        Datagram::setData(key, value);
+    }
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("DatagramUdp::setData(): ") + e.what());
 }
 
 /**
@@ -41,7 +115,7 @@ DatagramUdp::DatagramUdp(string sourcePlag) :
  * 
  * @return string 
  */
-string DatagramUdp::toString() const
+string DatagramUdp::toString() const try
 {
     string stringRepresentation = Datagram::toString();
     stringRepresentation += "{UDP info: sender: " + m_sender;
@@ -50,4 +124,8 @@ string DatagramUdp::toString() const
     stringRepresentation += "; payload: " + m_payload;
     stringRepresentation += "}";
     return stringRepresentation;
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("DatagramUdp::toString(): ") + e.what());
 }

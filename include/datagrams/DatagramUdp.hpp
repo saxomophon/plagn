@@ -32,6 +32,10 @@ class DatagramUdp : public Datagram
 public:
     DatagramUdp(std::string sourcePlag);
 
+    virtual DataType getData(const std::string & key) const;
+
+    virtual void setData(const std::string & key, const DataType & value);
+
     virtual std::string toString() const;
 
 
