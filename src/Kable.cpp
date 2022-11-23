@@ -22,6 +22,9 @@
 // std include
 #include <iostream>
 
+// own include
+#include "DatagramUdp.hpp"
+
 // self include
 #include "Kable.hpp"
 
@@ -52,7 +55,7 @@ Kable::Kable(PlagInterface & parent, std::shared_ptr<PlagInterface> target) :
  *
  * @param target the Plag, where the Datagrams should be delivered to instead
  */
-bool Kable::assignTarget(std::shared_ptr<PlagInterface> target)
+bool Kable::assignTarget(std::shared_ptr<PlagInterface> target) try
 {
     if (target->getType() == m_targetType)
     {
@@ -60,6 +63,10 @@ bool Kable::assignTarget(std::shared_ptr<PlagInterface> target)
         return true;
     }
     return false;
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in Kable::assignTarget(): ") + e.what());
 }
 
 /**
@@ -69,10 +76,14 @@ bool Kable::assignTarget(std::shared_ptr<PlagInterface> target)
  *
  * @param datagram a Datagram to be translated and delivered
  */
-void Kable::transmit(shared_ptr<Datagram> datagram)
+void Kable::transmit(shared_ptr<Datagram> datagram) try
 {
     shared_ptr<Datagram> translatedDatagram = translate(datagram);
     deliver(translatedDatagram);
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in Kable::transmit(): ") + e.what());
 }
 
 /**
@@ -83,11 +94,14 @@ void Kable::transmit(shared_ptr<Datagram> datagram)
  * @param sourceDatagram the Datagram of the parent
  * @return shared_ptr<Datagram> a Datagram the target Plag will understand
  */
-shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram)
+shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
 {
+    shared_ptr<Datagram> translatedDatagram = nullptr;
+    string sourcePlag = get<string>(sourceDatagram->getData("sourcePlag"));
     switch (m_targetType)
     {
     case PlagType::UDP:
+        translatedDatagram = shared_ptr<DatagramUdp>(new DatagramUdp(sourcePlag));
         break;
     case PlagType::none:
         //deliberate fall-through
@@ -95,7 +109,22 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram)
         cout << "Nothing to do here!" << endl;
         return nullptr;
     }
-    return nullptr;
+
+    // working through translation table
+    for (const pair<string, string> & mapEntry : m_translationMap)
+    {
+        if (mapEntry.first == "sourcePlag"
+            || mapEntry.first == "targetPlag"
+            || mapEntry.first == "gateCondition") continue;
+        translatedDatagram->setData(mapEntry.first,
+                                    sourceDatagram->getData(mapEntry.second));
+    }
+
+    return translatedDatagram;
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in Kable::translate(): ") + e.what());
 }
 
 /**
@@ -106,7 +135,11 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram)
  *
  * @sa Plag::placeDatagram()
  */
-void Kable::deliver(shared_ptr<Datagram> datagram)
+void Kable::deliver(shared_ptr<Datagram> datagram) try
 {
     m_target->placeDatagram(datagram);
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in Kable::deliver(): ") + e.what());
 }

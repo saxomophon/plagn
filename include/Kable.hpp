@@ -22,6 +22,9 @@
 #ifndef KABLE_HPP
 #define KABLE_HPP
 
+// std includes
+#include <map>
+
 // own includes
 #include "utils/PlagInterface.hpp"
 
@@ -42,6 +45,7 @@ private:
     PlagInterface & m_parent;                               //!< the source Plag (where Datagrams originate)
     std::shared_ptr<PlagInterface> m_target;                //!< the target Plag (where Datagrams are meant to be delivered to)
     PlagType m_targetType;                                  //!< the type of the target Plag, to ensure, replacements fit
+    std::map<std::string, std::string> m_translationMap;    //!< map of values to set to target Plag keys
 };
 
 #endif // KABLE_HPP
