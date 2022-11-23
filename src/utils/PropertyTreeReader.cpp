@@ -5,7 +5,7 @@
  * @contributors:
  * @brief Kind of a convenience interface for boost::ptree
  * @version 0.1
- * @date 2022-05-20
+ * @date 2022-11-23
  *
  * @copyright LGPL v2.1
  *
