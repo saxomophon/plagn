@@ -41,7 +41,8 @@ public:
     virtual std::string toString() const;
 
 private:
-    std::string m_ownId;                                                       //!< generated unique DatagramId
+    std::string m_ownId;                                                    //!< generated unique DatagramId
+    std::string m_sourcePlagName;                                           //!< name of the Plag this Datagram originated from
     uint64_t m_sourceDatagramId;                                            //!< id of Datagram this was translated from (if new: 0)
     std::chrono::time_point<std::chrono::steady_clock> m_timeOfCreation;    //!< time this Datagram was created
 

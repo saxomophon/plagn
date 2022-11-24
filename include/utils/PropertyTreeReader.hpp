@@ -34,6 +34,8 @@ public:
     PropertyTreeReader(const boost::property_tree::ptree & propTree,
                        const std::string & rootName);
 
+    std::vector<std::string> getKeys();
+
     // templacte functions ----
 
     /**

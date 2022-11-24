@@ -8,9 +8,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # with e.g. linked libraries
 set(APP_VERSION_MAJOR "0")
 # next one will be changed, when a conifuguration incompatibility occurs
-set(APP_VERSION_MINOR "0")
+set(APP_VERSION_MINOR "1")
 # this will increase every time something changes
-set(APP_VERSION_BUILD "1")
+set(APP_VERSION_BUILD "0")
 
 # prepare infos for the details section of the executable
 set(APP_VERSION "${APP_VERSION_MAJOR}.${APP_VERSION_MINOR}.${APP_VERSION_BUILD}")

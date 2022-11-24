@@ -51,6 +51,7 @@ public:
     virtual void placeDatagram(const std::shared_ptr<Datagram> datagram);
 
 protected:
+    bool sendOneFromList();
 
 private:
     // config parameters

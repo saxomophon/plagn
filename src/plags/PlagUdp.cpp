@@ -22,6 +22,9 @@
 // std include
 #include <iostream>
 
+// own includes
+#include "DatagramUdp.hpp"
+
 // self include
 #include "PlagUdp.hpp"
 
@@ -38,6 +41,7 @@ PlagUdp::PlagUdp(const boost::property_tree::ptree & propTree,
     m_socket(m_ioContext),
     m_resolver(m_ioContext)
 {
+    readConfig();
 }
 
 /**
@@ -66,7 +70,6 @@ void PlagUdp::readConfig() try
 {
     m_ip = getParameter<string>("ip");
     m_port = getParameter<uint16_t>("port");
-    cout << getParameter<string>("ip")  << " | " << getParameter<unsigned int>("port") << endl;
 }
 catch (exception & e)
 {
@@ -98,7 +101,7 @@ void PlagUdp::init() try
 catch (exception & e)
 {
     string errorMsg = e.what();
-    errorMsg += "\nSomething happened in PlagUdo::init()";
+    errorMsg += "\nSomething happened in PlagUdp::init()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
 }
@@ -122,14 +125,17 @@ bool PlagUdp::loopWork() try
         if (length > 0)
         {
             string data = string(recvBuff, length);
-            
-            cout << "Got data: " << data << endl;
+            shared_ptr<DatagramUdp> dataToSend(new DatagramUdp(getName(),
+                                                               senderEndpoint.address().to_string(),
+                                                               m_port, data));
+            appendToDistribution(dataToSend);
         }
+        sendOneFromList();
         return true;
     }
     else
     {
-        return false;
+        return sendOneFromList();
     }
 }
 catch (exception & e)
@@ -149,6 +155,11 @@ catch (exception & e)
  */
 void PlagUdp::placeDatagram(const shared_ptr<Datagram> datagram) try
 {
+    const shared_ptr<DatagramUdp> castPtr = dynamic_pointer_cast<DatagramUdp>(datagram);
+    if (castPtr != nullptr)
+    {
+        m_incommingDatagrams.push_back(datagram);
+    }
 }
 catch (exception & e)
 {
@@ -156,4 +167,23 @@ catch (exception & e)
     errorMsg += "\nSomething happened in PlagUdo::placeDatagram()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief takes one Datagram from buffer and sends its payload as set
+ * 
+ * @return true if there was data to send
+ * @return false if the buffer was empty
+ */
+bool PlagUdp::sendOneFromList()
+{
+    if (m_incommingDatagrams.begin() != m_incommingDatagrams.end())
+    {
+        shared_ptr<DatagramUdp> dataToSend;
+        dataToSend = dynamic_pointer_cast<DatagramUdp>(m_incommingDatagrams.front());
+        m_incommingDatagrams.pop_front();
+        return true;
+    }
+    return false;
 }

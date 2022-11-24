@@ -74,6 +74,28 @@ void Plag::init()
 
 /**
  *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ * 
+ * @return const string & member value
+ */
+const string & Plag::getName() const
+{
+    return m_name;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief attach a Kable as a sending channel
+ * 
+ * @param kable kable this Plags will send Datagram through
+ */
+void Plag::attachKable(shared_ptr<Kable> kable)
+{
+    m_kables.push_back(kable);
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
  * @brief creating a thread for the main execution to run. calls Plag::loop()
  *
  * @sa Plag::loop()
@@ -108,10 +130,23 @@ void Plag::loop(const bool & stopToken)
 {
     while (!stopToken)
     {
-        if (!this->loopWork())
+        try
         {
-            // no more work to do - worker is idle
-            this_thread::sleep_for(chrono::milliseconds(1));
+            distribute();
+            if (!this->loopWork())
+            {
+                // no more work to do - worker is idle
+                this_thread::sleep_for(chrono::milliseconds(1));
+            }
+        }
+        catch (exception & e)
+        {
+            cout << "Something happened while looping: " << e.what() << endl;
+        }
+        catch (...)
+        {
+            cerr << "Caught unexpected error! Stopping this thread: " << this->getName() << endl;
+            stopWork();
         }
     }
 }
@@ -123,12 +158,32 @@ void Plag::loop(const bool & stopToken)
  *
  * @param datagram A Datagram containing data for this Plag to interprete
  */
-void Plag::placeDatagram(const shared_ptr<Datagram> datagram)
+void Plag::placeDatagram(const shared_ptr<Datagram> datagram) try
 {
     if (datagram)
     {
         cout << "Hello World!" << endl;
     }
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened here:Plag::placeDatagram  What: ") + e.what());
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief put a Datagram to the outgoing buffer
+ * 
+ * @param datagram datagram to distribute()
+ * @sa Plag::distribute()
+ */
+void Plag::appendToDistribution(shared_ptr<Datagram> datagram) try
+{
+    m_outgoingDatagrams.push_back(datagram);
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened here:Plag::appendToDistribution  What: ") + e.what());
 }
 
 /**
@@ -137,7 +192,7 @@ void Plag::placeDatagram(const shared_ptr<Datagram> datagram)
  * every attached Kable.
  *
  */
-void Plag::distribute()
+void Plag::distribute() try
 {
     // if outgoing datagrams list is not empty: distribute
     if (m_outgoingDatagrams.begin() != m_outgoingDatagrams.end())
@@ -148,4 +203,8 @@ void Plag::distribute()
         }
         m_outgoingDatagrams.pop_front();
     }
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened here:Plag::distribute  What: ") + e.what());
 }

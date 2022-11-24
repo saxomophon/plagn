@@ -30,13 +30,73 @@ using namespace std;
  * 
  * @param sourcePlag the origin of this Datagram
  */
-DatagramUdp::DatagramUdp(string sourcePlag) :
+DatagramUdp::DatagramUdp(const string & sourcePlag) :
     Datagram(sourcePlag),
     m_sender("this"),
     m_receiver("this"),
     m_port(0),
     m_payload("")
 {
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief overload to Construct a new Datagram:: Datagram object sets member values
+ *
+ * @param sourcePlag the origin of this Datagram
+ */
+DatagramUdp::DatagramUdp(const string & sourcePlag, const string & sender, unsigned int port,
+                         const string & payload) :
+    Datagram(sourcePlag),
+    m_sender(sender),
+    m_receiver("this"),
+    m_port(port),
+    m_payload(payload)
+{
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ * 
+ * @return const string& member value
+ */
+const string & DatagramUdp::getSender() const
+{
+    return m_sender;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return const string& member value
+ */
+const string & DatagramUdp::getReceiver() const
+{
+    return m_receiver;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return unsigned int member value
+ */
+unsigned int DatagramUdp::getPort() const
+{
+    return m_port;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return const string& member value
+ */
+const string & DatagramUdp::getPayload() const
+{
+    return m_payload;
 }
 
 /**
@@ -85,19 +145,19 @@ void DatagramUdp::setData(const string & key, const DataType & value) try
 {
     if (key == string("sender"))
     {
-        m_sender = get<string>(value);
+        m_sender = convertDataTypeToString(value);
     }
     else if (key == string("receiver"))
     {
-        m_receiver = get<string>(value);
+        m_receiver = convertDataTypeToString(value);
     }
     else if (key == string("port"))
     {
-        m_port = get<unsigned int>(value);
+        m_port = convertDataTypeToUint(value);
     }
     else if (key == string("payload"))
     {
-        m_payload = get<string>(value);
+        m_payload = convertDataTypeToString(value);
     }
     else // use base class implementation
     {

@@ -30,7 +30,14 @@
 class DatagramUdp : public Datagram
 {
 public:
-    DatagramUdp(std::string sourcePlag);
+    DatagramUdp(const std::string & sourcePlag);
+    DatagramUdp(const std::string & sourcePlag, const std::string & sender,
+                unsigned int port, const std::string & payload);
+
+    const std::string & getSender() const;
+    const std::string & getReceiver() const;
+    unsigned int getPort() const;
+    const std::string & getPayload() const;
 
     virtual DataType getData(const std::string & key) const;
 

@@ -80,7 +80,7 @@ void printVersionToCommandLine()
     cout << "|           Plag'n            |" << endl;
     cout << "|                             |" << endl;
     cout << "|       Its version is        |" << endl;
-    cout << "|            0.0.1            |" << endl;
+    cout << "|            0.1.0            |" << endl;
     cout << "|                             |" << endl;
     cout << "| It's provided under license |" << endl;
     cout << "|          LGPL v2.1          |" << endl;
@@ -118,14 +118,14 @@ int main(int argc, char * argv[])
 
     // constructing the Plags
     map<string, shared_ptr<Plag>> allPlags;
-    bool stillHasPlugs = true;
+    bool stillHasPlags = true;
     string plagKey;
     size_t index = 1;
     do
     {
         plagKey = string("plag") + to_string(index);
-        stillHasPlugs = (propertyTree.find(plagKey) != propertyTree.not_found());
-        if (stillHasPlugs)
+        stillHasPlags = (propertyTree.find(plagKey) != propertyTree.not_found());
+        if (stillHasPlags)
         {
             string type = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "type");
             string name = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "name");
@@ -137,12 +137,41 @@ int main(int argc, char * argv[])
             }
             index++;
         }
-    } while (stillHasPlugs);
+    } while (stillHasPlags);
 
-    for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
+
+    // constructing the Plags
+    map<string, shared_ptr<Kable>> allKables;
+    bool stillHasKables = true;
+    string kableKey;
+    index = 1;
+    do
     {
-        plagEntry.second->readConfig();
-    }
+        kableKey = string("kable") + to_string(index);
+        stillHasKables = (propertyTree.find(kableKey) != propertyTree.not_found());
+        if (stillHasKables)
+        {
+            string source = PropertyTreeReader::getParameter<string>(propertyTree, kableKey,
+                                                                     "sourcePlag");
+            string target = PropertyTreeReader::getParameter<string>(propertyTree, kableKey,
+                                                                     "targetPlag");
+            cout << "Found Kable at index " << index << " to go from " << source << " to " << target << endl;
+
+            if (allPlags.count(source) == 0 || allPlags.count(target) == 0)
+            {
+                cerr << "Your Kable kable" << index << " has non-existent source(\"" << source
+                     << "\") or target(\"" << target << "\"). -> Exiting!" << endl;
+                exit(EXIT_FAILURE);
+            }
+
+            allKables.insert_or_assign(source, shared_ptr<Kable>(new Kable(propertyTree, kableKey,
+                                                                           allPlags.at(source),
+                                                                           allPlags.at(target))));
+            allPlags.at(source)->attachKable(allKables.at(source));
+
+            index++;
+        }
+    } while (stillHasKables);
     
 
     // init phase

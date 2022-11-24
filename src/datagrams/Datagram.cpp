@@ -37,6 +37,7 @@ using namespace std;
  * @param sourceName the name of the Plag, which created this Datagram
  */
 Datagram::Datagram(const string & sourceName) :
+    m_sourcePlagName(sourceName),
     m_sourceDatagramId(0),
     m_timeOfCreation(std::chrono::steady_clock::now())
 {
@@ -100,6 +101,10 @@ DataType Datagram::getData(const string & key) const try
     {
         return m_sourceDatagramId;
     }
+    else if (key == string("sourcePlag"))
+    {
+        return m_sourcePlagName;
+    }
     else
     {
         throw std::invalid_argument(string("Invalid key \"") + key + "\"");
@@ -121,7 +126,7 @@ void Datagram::setData(const string & key, const DataType & value) try
 {
     if (key == string("sourceDatagramId"))
     {
-        m_sourceDatagramId = get<uint64_t>(value);
+        m_sourceDatagramId = convertDataTypeToUint64(value);
     }
     else
     {

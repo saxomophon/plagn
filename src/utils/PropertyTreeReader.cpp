@@ -22,9 +22,32 @@
 // self include
 #include "PropertyTreeReader.hpp"
 
+using namespace std;
+
 PropertyTreeReader::PropertyTreeReader(const boost::property_tree::ptree & propTree,
                                        const std::string & rootName) :
     m_propertyTree(propTree),
     m_rootName(rootName)
 {
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief collects the list of keys, found under the root item
+ * 
+ * @return vector<string> 
+ */
+vector<string> PropertyTreeReader::getKeys() try
+{
+    vector<string> keys;
+    const boost::property_tree::ptree & childTree = m_propertyTree.get_child(m_rootName);
+    for (const std::pair<std::string, boost::property_tree::ptree> & item : childTree)
+    {
+        keys.push_back(item.first);
+    }
+    return keys;
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in PropertyTree::getKeys(): ") + e.what());
 }

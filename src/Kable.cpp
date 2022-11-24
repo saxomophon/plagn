@@ -38,10 +38,38 @@ using namespace std;
  * @param parent the source Plag, where Datagrams are from
  * @param target the target Plag, where Datagrams need to be translated to
  */
-Kable::Kable(PlagInterface & parent, std::shared_ptr<PlagInterface> target) :
+Kable::Kable(const boost::property_tree::ptree & propTree, const string & rootName,
+             std::shared_ptr<PlagInterface> parent, std::shared_ptr<PlagInterface> target) :
+    PropertyTreeReader(propTree, rootName),
     m_parent(parent),
     m_target(target)
 {
+    readConfig();
+}
+
+void Kable::readConfig() try
+{
+    vector<string> keys = getKeys();
+    for (const string & key : keys)
+    {
+        if (key == "sourcePlag" || key == "targetPlag")
+        {
+            continue;
+        }
+        else if (key == "gateCondition")
+        {
+            //TODO: create Gates
+            continue;
+        }
+        else
+        {
+            m_translationMap.insert_or_assign(key, getParameter<string>(key));
+        }
+    }
+}
+catch (exception & e)
+{
+    throw std::runtime_error(string("Happened in Kable::readConfig(): ") + e.what());
 }
 
 /**

@@ -63,6 +63,10 @@ public:
 
     virtual void init();
 
+    const std::string & getName() const;
+
+    void attachKable(std::shared_ptr<Kable> kable);
+
     virtual void startWorker();
 
     virtual void stopWork();
@@ -72,6 +76,9 @@ public:
     virtual bool loopWork() = 0;
 
     virtual void placeDatagram(const std::shared_ptr<Datagram> datagram);
+
+protected:
+    void appendToDistribution(std::shared_ptr<Datagram> datagram);
 
 private:
     void distribute();
