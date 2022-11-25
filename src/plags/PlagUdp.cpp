@@ -183,6 +183,17 @@ bool PlagUdp::sendOneFromList()
         shared_ptr<DatagramUdp> dataToSend;
         dataToSend = dynamic_pointer_cast<DatagramUdp>(m_incommingDatagrams.front());
         m_incommingDatagrams.pop_front();
+
+        boost::asio::ip::udp::resolver resolver(m_ioContext);
+        boost::asio::ip::address_v4 ipAddress;
+        ipAddress.from_string(dataToSend->getReceiver());
+        boost::asio::ip::udp::endpoint target(ipAddress,
+                                              static_cast<uint16_t>(dataToSend->getPort()));
+        boost::asio::ip::udp::resolver::iterator iter = resolver.resolve(target);
+        string payload = dataToSend->getPayload();
+        m_socket.send_to(boost::asio::buffer(payload, payload.size()), iter->endpoint());
+        
+
         return true;
     }
     return false;
