@@ -37,6 +37,7 @@ set(LIBS ${LIBS} ${Boost_LIBRARIES})
 file(GLOB SOURCES "src/*.cpp"
                   "src/utils/*.cpp"
                   "src/datagrams/*.cpp"
+                  "src/layer/*.cpp"
                   "src/plags/*.cpp")
 
 add_executable(plagn ${SOURCES})
@@ -45,6 +46,7 @@ add_executable(plagn ${SOURCES})
 target_include_directories(plagn PRIVATE include
                                          include/datagrams
                                          include/utils
+                                         include/layer
                                          include/plags)
 # source files added to include dirs
 target_include_directories(plagn PRIVATE src)
