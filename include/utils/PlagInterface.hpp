@@ -37,6 +37,7 @@
 enum PlagType : unsigned int
 {
     UDP,
+    HttpServer,
     none = UINT_MAX
 };
 

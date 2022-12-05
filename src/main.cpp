@@ -30,6 +30,7 @@
 
 // own includes
 #include "PlagUdp.hpp"
+#include "PlagHTTPServer.hpp"
 #include "Utilities.hpp"
 
 using namespace std;
@@ -133,6 +134,11 @@ int main(int argc, char * argv[])
             if (type == "udp")
             {
                 shared_ptr<Plag> sharedPlag(new PlagUdp(propertyTree, name, index));
+                allPlags.insert_or_assign(name, sharedPlag);
+            }
+            else if (type == "httpserver")
+            {
+                shared_ptr<Plag> sharedPlag(new PlagHttpServer(propertyTree, name, index));
                 allPlags.insert_or_assign(name, sharedPlag);
             }
             index++;
