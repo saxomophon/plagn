@@ -22,6 +22,14 @@ Ninja is a slightly faster builder/linker. You don't need to, but will have more
 
 from terminal.
 
+## Install pkg-config
+
+The pkg-config program is used to retrieve information about installed libraries in the system. It is typically used to compile and link against one or more libraries. You'll need this tool for building the dependencies downloaded from VCPKG.
+
+`brew install pkg-config`
+
+from terminal.
+
 ## Install Visual Studio Code
 
 We are using Visual Studio Code to collaborate, as it has some nice features for exactly that. So we suggest, you'll use it, too. You don't have to, of course.
