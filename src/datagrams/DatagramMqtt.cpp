@@ -1,9 +1,9 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file DatagramUdp.cpp
+ * @file DatagramMqtt.cpp
  * @author Gerrit Erichsen (saxomophon@gmx.de)
  * @contributors: 
- * @brief Implementation of the DatagramUdp class
+ * @brief Implementation of the DatagramMqtt class
  * @version 0.1
  * @date 2022-11-29
  *
@@ -20,7 +20,7 @@
  */
 
 // self include
-#include "DatagramUdp.hpp"
+#include "DatagramMqtt.hpp"
 
 using namespace std;
 
@@ -30,12 +30,14 @@ using namespace std;
  * 
  * @param sourcePlag the origin of this Datagram
  */
-DatagramUdp::DatagramUdp(const string & sourcePlag) :
+DatagramMqtt::DatagramMqtt(const string & sourcePlag) :
     Datagram(sourcePlag),
-    m_sender("this"),
-    m_receiver("this"),
-    m_port(0),
-    m_payload("")
+    m_action(""),
+    m_topic(""),
+    m_content(""),
+    m_userInfo(""),
+    m_qos(1),
+    m_retain(false)
 {
 }
 
@@ -45,13 +47,15 @@ DatagramUdp::DatagramUdp(const string & sourcePlag) :
  *
  * @param sourcePlag the origin of this Datagram
  */
-DatagramUdp::DatagramUdp(const string & sourcePlag, const string & sender, unsigned int port,
-                         const string & payload) :
+DatagramMqtt::DatagramMqtt(const string & sourcePlag, const string & action, const string & topic,
+                           const string & content, uint8_t qos, bool retain) :
     Datagram(sourcePlag),
-    m_sender(sender),
-    m_receiver("this"),
-    m_port(port),
-    m_payload(payload)
+    m_action(action),
+    m_topic(topic),
+    m_content(content),
+    m_userInfo(""),
+    m_qos(qos),
+    m_retain(retain)
 {
 }
 
@@ -61,9 +65,9 @@ DatagramUdp::DatagramUdp(const string & sourcePlag, const string & sender, unsig
  * 
  * @return const string& member value
  */
-const string & DatagramUdp::getSender() const
+const string & DatagramMqtt::getAction() const
 {
-    return m_sender;
+    return m_action;
 }
 
 /**
@@ -72,9 +76,31 @@ const string & DatagramUdp::getSender() const
  *
  * @return const string& member value
  */
-const string & DatagramUdp::getReceiver() const
+const string & DatagramMqtt::getTopic() const
 {
-    return m_receiver;
+    return m_topic;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return const string& member value
+ */
+const string & DatagramMqtt::getContent() const
+{
+    return m_content;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return const string& member value
+ */
+const string & DatagramMqtt::getUserInfo() const
+{
+    return m_userInfo;
 }
 
 /**
@@ -83,9 +109,9 @@ const string & DatagramUdp::getReceiver() const
  *
  * @return unsigned int member value
  */
-unsigned int DatagramUdp::getPort() const
+unsigned int DatagramMqtt::getQoS() const
 {
-    return m_port;
+    return m_qos;
 }
 
 /**
@@ -94,9 +120,9 @@ unsigned int DatagramUdp::getPort() const
  *
  * @return const string& member value
  */
-const string & DatagramUdp::getPayload() const
+bool DatagramMqtt::getRetainFlag() const
 {
-    return m_payload;
+    return m_retain;
 }
 
 /**
@@ -106,23 +132,31 @@ const string & DatagramUdp::getPayload() const
  * @param key reference name of the value to access
  * @return DataType
  */
-DataType DatagramUdp::getData(const string & key) const try
+DataType DatagramMqtt::getData(const string & key) const try
 {
-    if (key == string("sender"))
+    if (key == string("action"))
     {
-        return m_sender;
+        return getAction();
     }
-    else if (key == string("receiver"))
+    else if (key == string("topic"))
     {
-        return m_receiver;
+        return getTopic();
     }
-    else if (key == string("port"))
+    else if (key == string("content"))
     {
-        return m_port;
+        return getContent();
     }
-    else if (key == string("payload"))
+    else if (key == string("userInfo"))
     {
-        return m_payload;
+        return getUserInfo();
+    }
+    else if (key == string("qos"))
+    {
+        return getQoS();
+    }
+    else if (key == string("retain"))
+    {
+        return static_cast<unsigned int>(getRetainFlag());
     }
     else // use base class implementation
     {
@@ -131,11 +165,11 @@ DataType DatagramUdp::getData(const string & key) const try
 }
 catch (std::invalid_argument & e)
 {
-    throw std::invalid_argument(string("In DatagramUdp: ") + e.what());
+    throw std::invalid_argument(string("In DatagramMqtt: ") + e.what());
 }
 catch (exception & e)
 {
-    throw std::runtime_error(string("DatagramUdp::getData() ") + e.what());
+    throw std::runtime_error(string("DatagramMqtt::getData() ") + e.what());
 }
 
 /**
@@ -145,23 +179,31 @@ catch (exception & e)
  * @param key reference name of the value to override
  * @param value value to bet set for member accssible by @p key
  */
-void DatagramUdp::setData(const string & key, const DataType & value) try
+void DatagramMqtt::setData(const string & key, const DataType & value) try
 {
-    if (key == string("sender"))
+    if (key == string("action"))
     {
-        m_sender = convertDataTypeToString(value);
+        m_action = convertDataTypeToString(value);
     }
-    else if (key == string("receiver"))
+    else if (key == string("topic"))
     {
-        m_receiver = convertDataTypeToString(value);
+        m_topic = convertDataTypeToString(value);
     }
-    else if (key == string("port"))
+    else if (key == string("content"))
     {
-        m_port = convertDataTypeToUint(value);
+        m_content = convertDataTypeToString(value);
     }
-    else if (key == string("payload"))
+    else if (key == string("userInfo"))
     {
-        m_payload = convertDataTypeToString(value);
+        m_userInfo = convertDataTypeToString(value);
+    }
+    else if (key == string("qos"))
+    {
+        m_qos = static_cast<uint8_t>(convertDataTypeToUint(value));
+    }
+    else if (key == string("retain"))
+    {
+        m_retain = convertDataTypeToBoolean(value);
     }
     else // use base class implementation
     {
@@ -170,11 +212,11 @@ void DatagramUdp::setData(const string & key, const DataType & value) try
 }
 catch (std::invalid_argument & e)
 {
-    throw std::invalid_argument(string("In DatagramUdp: ") + e.what());
+    throw std::invalid_argument(string("In DatagramMqtt: ") + e.what());
 }
 catch (exception & e)
 {
-    throw std::runtime_error(string("DatagramUdp::setData(): ") + e.what());
+    throw std::runtime_error(string("DatagramMqtt::setData(): ") + e.what());
 }
 
 /**
@@ -183,17 +225,19 @@ catch (exception & e)
  * 
  * @return string 
  */
-string DatagramUdp::toString() const try
+string DatagramMqtt::toString() const try
 {
     string stringRepresentation = Datagram::toString();
-    stringRepresentation += "{UDP info: sender: " + m_sender;
-    stringRepresentation += "; receiver: " + m_receiver;
-    stringRepresentation += "; port: " + to_string(m_port);
-    stringRepresentation += "; payload: " + m_payload;
+    stringRepresentation += "{MQTT info: action: " + m_action;
+    stringRepresentation += "; topic: " + m_topic;
+    stringRepresentation += "; content: " + m_content;
+    stringRepresentation += "; userInfo: " + m_userInfo;
+    stringRepresentation += "; QoS: " + to_string(m_qos);
+    stringRepresentation += string("; retain: ") + string(m_retain ? "true" : "false");
     stringRepresentation += "}";
     return stringRepresentation;
 }
 catch (exception & e)
 {
-    throw std::runtime_error(string("DatagramUdp::toString(): ") + e.what());
+    throw std::runtime_error(string("DatagramMqtt::toString(): ") + e.what());
 }

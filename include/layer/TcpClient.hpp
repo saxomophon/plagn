@@ -39,7 +39,7 @@
 class TcpClient : public TransportLayer
 {
 public:
-    TcpClient(const std::chrono::milliseconds & timeout, std::shared_ptr<Plag> parent,
+    TcpClient(const std::chrono::milliseconds & timeout, const Plag & parent,
               const std::string & serverIP, uint16_t port);
 
     virtual void connect(const std::chrono::milliseconds & timeout = std::chrono::milliseconds(1000));
@@ -60,7 +60,7 @@ private:
     void handleBoostReceive(const boost::system::error_code & error, std::size_t n);
 
 private:
-    std::shared_ptr<Plag> m_parent;                         //!< the parent Plag, holding this layer
+    const Plag & m_parent;                                  //!< the parent Plag, holding this layer
     boost::asio::ip::tcp::endpoint m_endpoint;              //!< TCP/IP endpoint to connect to (IP and port)
     boost::asio::io_context m_ioContext;                    //!< boost interface object for async operations
     std::unique_ptr<boost::asio::ip::tcp::socket> m_socket; //!< socket, representing an open connection

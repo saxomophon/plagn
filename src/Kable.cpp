@@ -39,7 +39,7 @@ using namespace std;
  * @param target the target Plag, where Datagrams need to be translated to
  */
 Kable::Kable(const boost::property_tree::ptree & propTree, const string & rootName,
-             std::shared_ptr<PlagInterface> parent, std::shared_ptr<PlagInterface> target) :
+             weak_ptr<PlagInterface> parent, weak_ptr<PlagInterface> target) :
     PropertyTreeReader(propTree, rootName),
     m_parent(parent),
     m_target(target)
@@ -83,9 +83,9 @@ catch (exception & e)
  *
  * @param target the Plag, where the Datagrams should be delivered to instead
  */
-bool Kable::assignTarget(std::shared_ptr<PlagInterface> target) try
+bool Kable::assignTarget(weak_ptr<PlagInterface> target) try
 {
-    if (target->getType() == m_targetType)
+    if (!target.expired() && target.lock()->getType() == m_targetType)
     {
         m_target = target;
         return true;
@@ -165,7 +165,8 @@ catch (exception & e)
  */
 void Kable::deliver(shared_ptr<Datagram> datagram) try
 {
-    m_target->placeDatagram(datagram);
+    // as Kable is owned by Plag, Kable has to check whether weak_ptr still points to valid target
+    if (!m_target.expired()) m_target.lock()->placeDatagram(datagram);
 }
 catch (exception & e)
 {

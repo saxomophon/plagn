@@ -29,6 +29,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 
 // own includes
+#include "PlagMqtt.hpp"
 #include "PlagUdp.hpp"
 #include "Utilities.hpp"
 
@@ -130,7 +131,12 @@ int main(int argc, char * argv[])
             string type = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "type");
             string name = PropertyTreeReader::getParameter<string>(propertyTree, plagKey, "name");
             cout << "Found Plag at index " << index << " with type " << type << " and name " << name << endl;
-            if (type == "udp")
+            if (type == "mqtt")
+            {
+                shared_ptr<Plag> sharedPlag(new PlagMqtt(propertyTree, name, index));
+                allPlags.insert_or_assign(name, sharedPlag);
+            }
+            else if (type == "udp")
             {
                 shared_ptr<Plag> sharedPlag(new PlagUdp(propertyTree, name, index));
                 allPlags.insert_or_assign(name, sharedPlag);
@@ -178,10 +184,12 @@ int main(int argc, char * argv[])
 
     bool atLeastOneThreadRunning = true;
 
+    cout << "Initializing Plags..." << endl;
     for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
     {
         plagEntry.second->init();
     }
+    cout << "Initialized all Plags." << endl;
 
     // event Handling:
 #ifdef _WIN32
@@ -199,10 +207,12 @@ int main(int argc, char * argv[])
 #endif
 
     // running phass
+    cout << "Starting Plags..." << endl;
     for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
     {
         plagEntry.second->startWorker();
     }
+    cout << "Plags running." << endl;
 
     while (atLeastOneThreadRunning && !gotTerminationRequest)
     {
@@ -212,11 +222,13 @@ int main(int argc, char * argv[])
         this_thread::sleep_for(chrono::milliseconds(1));
     }
 
+    cout << "Stopping Plags..." << endl;
     // stopping phase
     for (const pair<string, shared_ptr<Plag>> & plagEntry : allPlags)
     {
         plagEntry.second->stopWork();
     }
+    cout << "Plags stoped." << endl;
 
     cout << "Done. See you World!" << endl;
 
