@@ -34,11 +34,12 @@ class Kable : public PropertyTreeReader
 public:
     Kable(const boost::property_tree::ptree & propTree,
           const std::string & rootName,
-          std::shared_ptr<PlagInterface> parent, std::shared_ptr<PlagInterface> target = nullptr);
+          std::weak_ptr<PlagInterface> parent,
+          std::weak_ptr<PlagInterface> target = std::weak_ptr<PlagInterface>{});
 
     virtual void readConfig();
 
-    bool assignTarget(std::shared_ptr<PlagInterface> parent);
+    bool assignTarget(std::weak_ptr<PlagInterface> parent);
 
     void transmit(std::shared_ptr<Datagram> datagram);
 
@@ -47,8 +48,8 @@ public:
     void deliver(std::shared_ptr<Datagram> datagram);
 
 private:
-    std::shared_ptr<PlagInterface> m_parent;                               //!< the source Plag (where Datagrams originate)
-    std::shared_ptr<PlagInterface> m_target;                //!< the target Plag (where Datagrams are meant to be delivered to)
+    std::weak_ptr<PlagInterface> m_parent;                  //!< the source Plag (where Datagrams originate)
+    std::weak_ptr<PlagInterface> m_target;                  //!< the target Plag (where Datagrams are meant to be delivered to)
     PlagType m_targetType;                                  //!< the type of the target Plag, to ensure, replacements fit
     std::map<std::string, std::string> m_translationMap;    //!< map of values to set to target Plag keys
 };

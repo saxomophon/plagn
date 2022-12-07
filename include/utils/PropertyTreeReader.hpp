@@ -95,7 +95,8 @@ public:
     template <class T>
     T getOptionalParameter(const std::string & key, const T & defaultValue) try
     {
-        boost::optional<T> tmp = m_propertyTree.get_optional<T>(m_rootName + "|" + key, '|');
+        boost::property_tree::ptree::path_type customPath(m_rootName + "|" + key, '|');
+        boost::optional<T> tmp = m_propertyTree.get_optional<T>(customPath);
         return (tmp.is_initialized()) ? tmp.value() : defaultValue;
     }
     catch (std::exception & e)

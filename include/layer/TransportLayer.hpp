@@ -67,7 +67,7 @@ public:
      *
      * @return size_t number of bytes
      */
-    virtual size_t getAvailalbeBytesCount() = 0;
+    virtual size_t getAvailableBytesCount() = 0;
 
     /**
      * ---------------------------------------------------------------------------------------------

@@ -37,6 +37,7 @@
 enum PlagType : unsigned int
 {
     UDP,
+    MQTT,
     none = UINT_MAX
 };
 

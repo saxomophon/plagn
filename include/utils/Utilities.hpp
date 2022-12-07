@@ -69,6 +69,7 @@ typedef std::variant<int, unsigned int, int64_t, uint64_t, double,
                      std::string, std::map<std::string, std::string>,
                      std::vector<std::string>> DataType;
 
+bool convertDataTypeToBoolean(const DataType & value);
 int convertDataTypeToInt(const DataType & value, int defaultValue = 0);
 unsigned int convertDataTypeToUint(const DataType & value, unsigned int defaultValue = 0);
 int64_t convertDataTypeToInt64(const DataType & value, int64_t defaultValue = 0);
@@ -82,7 +83,7 @@ bool isDigit(char c) noexcept;
 bool startsWith(char c, const std::string & text);
 bool endsWith(char c, const std::string & text);
 
-
+std::string getBinStringAsAsciiHex(const std::string & binaryStr, const std::string & separator = " ");
 std::string getTimeAsUtcIsoStr(const std::time_t & timePoint);
 
 
