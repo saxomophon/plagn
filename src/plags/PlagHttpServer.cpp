@@ -24,6 +24,7 @@
 #include <vector>
 
 // own includes
+#include <lua.hpp>
 
 // boost includes
 #include <boost/algorithm/string.hpp>
@@ -39,14 +40,16 @@ using namespace boost::algorithm;
 using ip::tcp;
 
 
-PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioContext) : m_sock(ioContext)
+PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer)
+    : m_sock(ioContext),
+    m_ptrParentPlagHttpServer(ptrParentPlagHttpServer)
 {
     
 }
 
-PlagHttpServerConnection::pointer PlagHttpServerConnection::create(boost::asio::io_context & ioContext)
+PlagHttpServerConnection::pointer PlagHttpServerConnection::create(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer)
 {
-    return pointer(new PlagHttpServerConnection(ioContext));
+    return pointer(new PlagHttpServerConnection(ioContext, ptrParentPlagHttpServer));
 }
 
 tcp::socket & PlagHttpServerConnection::socket()
@@ -76,13 +79,81 @@ void PlagHttpServerConnection::start()
     }
     cout << "Content: " << req.getContent() << endl;
 
-    PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
-    resp.setStatus(PlagHttpServer::HTTP_200);
-    resp.addHeader("Content-Type", "text/plain");
-    resp.setContent("This is a test response");
+    for (auto endpoint : m_ptrParentPlagHttpServer->m_endpoints)
+    {
+        if (req == endpoint)
+        {
+            // Lua Magic
+            // open the lua library
+            lua_State * L = luaL_newstate();
+            luaL_openlibs(L);
 
-    m_sock.write_some(boost::asio::buffer(resp.encode()));
-    m_sock.close();
+            // create header table
+            lua_createtable(L, 0, 4);
+            for (auto headerPair : req.getHeader())
+            {
+                lua_pushstring(L, headerPair.first.c_str());
+                lua_pushstring(L, headerPair.second.c_str());
+                lua_settable(L, -3);
+            }
+            lua_setglobal(L, "header");
+
+            // create params table
+            lua_createtable(L, 0, 4);
+            for (auto headerPair : req.getParams())
+            {
+                lua_pushstring(L, headerPair.first.c_str());
+                lua_pushstring(L, headerPair.second.c_str());
+                lua_settable(L, -3);
+            }
+            lua_setglobal(L, "params");
+
+            // create global for content
+            lua_pushstring(L, req.getContent().c_str());
+            lua_setglobal(L, "content");
+
+            // create global for endpoint
+            lua_pushstring(L, req.getEndpoint().c_str());
+            lua_setglobal(L, "endpoint");
+
+            // create global for version
+            lua_pushstring(L, req.getHttpVersion().c_str());
+            lua_setglobal(L, "httpversion");
+            
+            // create global for method
+            lua_pushnumber(L, req.getMethod());
+            lua_setglobal(L, "method");
+
+            // running the script
+            if (luaL_dofile(L, "../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
+            {
+                cout << "[C] Executed example.lua\n";
+            }
+            else
+            {
+                cout << "[C] Error reading script\n";
+                //luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
+            }
+            // close the Lua state
+            lua_close(L);
+
+            PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+            resp.setStatus(PlagHttpServer::HTTP_200);
+            resp.addHeader("Content-Type", "text/plain");
+            resp.setContent("This is a test response");
+
+            m_sock.write_some(boost::asio::buffer(resp.encode()));
+            m_sock.close();
+        }
+        else
+        {
+            PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+            resp.setStatus(PlagHttpServer::HTTP_404);
+
+            m_sock.write_some(boost::asio::buffer(resp.encode()));
+            m_sock.close();
+        }
+    }
 }
 
 string PlagHttpServerConnection::getRawRequest()
@@ -146,9 +217,11 @@ string PlagHttpServerConnection::getRawRequest()
  * @brief Const a new PlagHttpServerTcpServer::PlagHttpServerTcpServer object assigns default values
  *
  */
-PlagHttpServerTcpServer::PlagHttpServerTcpServer(boost::asio::io_context & ioContext, uint16_t port)
-    : m_acceptor(ioContext, tcp::endpoint(tcp::v4(), port)),
-    m_ioContext(ioContext)
+PlagHttpServerTcpServer::PlagHttpServerTcpServer(boost::asio::io_context & ioContext,
+    uint16_t port, PlagHttpServer * ptrParentPlagHttpServer)
+        : m_acceptor(ioContext, tcp::endpoint(tcp::v4(), port)),
+        m_ioContext(ioContext),
+        m_ptrParentPlagHttpServer(ptrParentPlagHttpServer)
 {
     startAccept();
 }
@@ -162,7 +235,7 @@ void PlagHttpServerTcpServer::startAccept()
 {
  // socket
     PlagHttpServerConnection::pointer connection =
-        PlagHttpServerConnection::create(m_ioContext);
+        PlagHttpServerConnection::create(m_ioContext, m_ptrParentPlagHttpServer);
 
    // asynchronous accept operation and wait for a new connection.
     m_acceptor.async_accept(connection->socket(),
@@ -228,9 +301,10 @@ void PlagHttpServer::readConfig() try
     // TODO: Read the endpoints! 
     // using a default one for now
     endpoint defaultEndpoint;
-    defaultEndpoint.endpoint = "/";
+    defaultEndpoint.endpoint = "/*";
     defaultEndpoint.method = HTTP_GET;
     defaultEndpoint.scriptFile = "./endpoint.lua";
+    defaultEndpoint.workingDirectory = "./";
     m_endpoints.push_back(defaultEndpoint);
 }
 catch (exception & e)
@@ -248,7 +322,7 @@ catch (exception & e)
  */
 void PlagHttpServer::init() try
 {
-    m_tcpServer = boost::shared_ptr<PlagHttpServerTcpServer>(new PlagHttpServerTcpServer(m_ioContext, m_port));
+    m_tcpServer = boost::shared_ptr<PlagHttpServerTcpServer>(new PlagHttpServerTcpServer(m_ioContext, m_port, this));
 }
 catch (exception & e)
 {
@@ -492,6 +566,26 @@ boost::optional<std::string> PlagHttpServerHttpRequest::getParam(std::string key
 std::map<std::string, std::string> PlagHttpServerHttpRequest::getParams()
 {
     return m_params;
+}
+
+bool PlagHttpServerHttpRequest::operator == (const PlagHttpServer::endpoint & endpoint)
+{
+    // check the HTTP_METHOD
+    if (m_method != endpoint.method)
+        return false;
+
+    // check Http Endpoint
+    if (contains(endpoint.endpoint, "*"))
+    {
+        auto pos = endpoint.endpoint.find('*');
+        return endpoint.endpoint.substr(0, pos) == m_endpoint.substr(0, pos);
+    }
+    else
+    {
+        return endpoint.endpoint == m_endpoint;
+    }
+
+    return false;
 }
 
 PlagHttpServerHttpResponse::PlagHttpServerHttpResponse(PlagHttpServer::httpMethod method, string version, string endpoint)

@@ -38,6 +38,9 @@
 // own includes
 #include "Plag.hpp"
 
+// forward declaration
+class PlagHttpServer;
+
 /**
  *-------------------------------------------------------------------------------------------------
  * @brief The PlagHttpServerConnection class Handles one connection to a client async
@@ -46,11 +49,11 @@
 class PlagHttpServerConnection : public boost::enable_shared_from_this<PlagHttpServerConnection>
 {
 public:
-    PlagHttpServerConnection(boost::asio::io_context & ioContext);
+    PlagHttpServerConnection(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer);
     
     typedef boost::shared_ptr<PlagHttpServerConnection> pointer;
     
-    static pointer create(boost::asio::io_context & ioContext);
+    static pointer create(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer);
 
     boost::asio::ip::tcp::socket & socket();
 
@@ -58,7 +61,8 @@ public:
 
 private:
     boost::asio::ip::tcp::socket m_sock; //!< tcp socket for this connection
-
+    PlagHttpServer * m_ptrParentPlagHttpServer;
+    
     std::string getRawRequest(); //!< function for getting the raw request from sock
 };
 
@@ -70,13 +74,14 @@ private:
 class PlagHttpServerTcpServer
 {
 public:
-    PlagHttpServerTcpServer(boost::asio::io_context & s, uint16_t port);
+    PlagHttpServerTcpServer(boost::asio::io_context & s, uint16_t port, PlagHttpServer * ptrParentPlagHttpServer);
     void handleAccept(PlagHttpServerConnection::pointer connection, const boost::system::error_code & err);
 
 private:
     void startAccept();
     boost::asio::ip::tcp::acceptor m_acceptor; //!< acceptor for the incoming connections
     boost::asio::io_context & m_ioContext; //!< io_service for the server
+    PlagHttpServer * m_ptrParentPlagHttpServer;
 };
 
 /**
@@ -105,6 +110,7 @@ public:
     typedef struct
     {
         std::string endpoint;
+        std::string workingDirectory;
         std::string scriptFile;
         httpMethod method;
 
@@ -223,6 +229,9 @@ public:
     PlagHttpServerHttpRequest(std::string rawRequest);
     boost::optional<std::string> getParam(std::string key);
     std::map<std::string, std::string> getParams();
+
+    bool operator == (const PlagHttpServer::endpoint & endpoint);
+    
 private:
     std::map<std::string, std::string> m_params;
 };
