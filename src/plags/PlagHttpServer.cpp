@@ -96,7 +96,7 @@ void PlagHttpServerConnection::start()
                 lua_pushstring(L, headerPair.second.c_str());
                 lua_settable(L, -3);
             }
-            lua_setglobal(L, "header");
+            lua_setglobal(L, "reqHeader");
 
             // create params table
             lua_createtable(L, 0, 4);
@@ -106,44 +106,76 @@ void PlagHttpServerConnection::start()
                 lua_pushstring(L, headerPair.second.c_str());
                 lua_settable(L, -3);
             }
-            lua_setglobal(L, "params");
+            lua_setglobal(L, "reqParams");
 
             // create global for content
             lua_pushstring(L, req.getContent().c_str());
-            lua_setglobal(L, "content");
+            lua_setglobal(L, "reqContent");
 
             // create global for endpoint
             lua_pushstring(L, req.getEndpoint().c_str());
-            lua_setglobal(L, "endpoint");
+            lua_setglobal(L, "reqEndpoint");
 
             // create global for version
             lua_pushstring(L, req.getHttpVersion().c_str());
-            lua_setglobal(L, "httpversion");
-            
-            // create global for method
-            lua_pushnumber(L, req.getMethod());
-            lua_setglobal(L, "method");
+            lua_setglobal(L, "reqHttpVersion");
 
             // running the script
             if (luaL_dofile(L, "../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
             {
                 cout << "[C] Executed example.lua\n";
+                PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+                
+                lua_getglobal(L, "respHeader");
+                if (lua_istable(L, -1))
+                {
+                    cout << endl << "respHeader:" << endl;
+                    lua_pushnil(L);
+                    while (lua_next(L, -2) != 0)
+                    {
+                        auto key = lua_tostring(L, -2);
+                        auto val = lua_tostring(L, -1);
+                        cout << key << ": " << val << endl;
+                        resp.addHeader(key, val);
+                        lua_pop(L, 1);
+                    }
+                }
+                
+                lua_getglobal(L, "respContent");
+                auto content = lua_tostring(L, -1);
+                cout << "respContent: " << content << endl;
+                resp.setContent(content);
+
+
+                lua_getglobal(L, "respStatus");
+                if (lua_istable(L, -1))
+                {
+                    lua_getfield(L, -1, "code");
+                    auto respCode = static_cast<int>(lua_tointeger(L, -1));
+
+                    lua_getfield(L, -2, "message");
+                    auto respMessage = lua_tostring(L, -1);
+
+                    cout << "respCode: " << respCode << endl;
+                    cout << "respMessage: " << respMessage << endl;
+                    PlagHttpServer::responseStatusCode respStatus = { respCode, respMessage };
+                    resp.setStatus(respStatus);
+                }
+
+                m_sock.write_some(boost::asio::buffer(resp.encode()));
+                m_sock.close();
             }
             else
             {
                 cout << "[C] Error reading script\n";
-                //luaL_error(L, "Error: %s\n", lua_tostring(L, -1));
+                PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+                resp.setStatus(PlagHttpServer::HTTP_500);
+
+                m_sock.write_some(boost::asio::buffer(resp.encode()));
+                m_sock.close();
             }
             // close the Lua state
             lua_close(L);
-
-            PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
-            resp.setStatus(PlagHttpServer::HTTP_200);
-            resp.addHeader("Content-Type", "text/plain");
-            resp.setContent("This is a test response");
-
-            m_sock.write_some(boost::asio::buffer(resp.encode()));
-            m_sock.close();
         }
         else
         {
