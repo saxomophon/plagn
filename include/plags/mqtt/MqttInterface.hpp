@@ -51,6 +51,9 @@ protected:
     // mqtt string helper
     virtual std::string makeMqttString(const std::string & text) const;
     virtual std::string extractMqttString(std::string & text, size_t startPos = 0) const;
+    virtual std::string makeMqttVarInt(unsigned int value) const;
+    virtual unsigned int readMqttVarInt(const std::string & data, uint8_t & offset,
+                                        size_t startPos = 0) const;
     // datagram generation convenience stuff
     virtual void prepareFixedHeader(MqttMessageType type, uint8_t flags,
                                     std::string & content) const;
