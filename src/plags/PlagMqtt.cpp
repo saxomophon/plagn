@@ -86,7 +86,6 @@ void PlagMqtt::readConfig() try
     m_port = getOptionalParameter<uint16_t>("port", 1883);
 
     m_keepAliveInterval = getOptionalParameter<unsigned int>("keepAliveInterval", 300);
-    m_keepAliveInterval *= 1000; // user shall input in seconds, but we'll need miliiseconds
 
     m_userName = getOptionalParameter<string>("userName", string("plagn"));
     m_userPass = getOptionalParameter<string>("userPass", string("plagn"));

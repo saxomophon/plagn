@@ -46,13 +46,20 @@ enum MqttReasonCode: uint8_t
     SERVER_UNAVAILABLE_V5 = 0x88,
     SERVER_BUSY = 0x89,
     BANNED = 0x8A,
+    SERVER_SHUTS_DOWN = 0x8B,
     BAD_AUTH_METHOD = 0x8C,
+    KEEP_ALIVE_TIMEOUT = 0x8D,
+    SESSION_TAKEOVER = 0x8E,
     INVALID_TOPIC_FILTER = 0x8F,
     INVALID_TOPIC_NAME = 0x90,
     PACKET_ID_IN_USE = 0x91,
     PACKET_ID_NOT_FOUND = 0x92,
+    RECEIVE_MAX_EXCEEDED = 0x93,
+    INVALID_TOPIC_ALIAS = 0x94,
     PACKET_TOO_LARGE = 0x95,
+    MESSAGE_RATE_TOO_HIGH = 0x96,
     QUOTA_EXCEEDED = 0x97,
+    ADMIN_ACTION = 0x98,
     PAYLOAD_FORMAT_INVALID = 0x99,
     NO_RETAIN = 0x9A,
     NO_QOS = 0x9B,
@@ -60,6 +67,7 @@ enum MqttReasonCode: uint8_t
     SERVER_MOVED = 0x9D,
     SHARED_SUB_NOT_SUPPORTED = 0x9E,
     CONNECTION_RATE_EXCEEDED = 0x9F,
+    MAX_CONNECT_TIME = 0xA0,
     SUB_ID_NOT_SUPPORTED = 0xA1,
     SUB_WILDCARD_NOT_SUPPORTED = 0xA2
 };
@@ -80,14 +88,14 @@ protected:
              std::string> convertUserPropertiesToMap(const std::map<MqttPropertyType,
                                                                     std::string> & properties) const;
    // datagram generation convenience stuff
-    std::string prepareProperties(const std::vector<MqttPropertyType> & types,
-                                  const std::vector<std::string> & data) const;
+    std::string makeProperty(MqttPropertyType type, const DataType & data) const;
 
     virtual std::string createConnectMessage();
 
     // parser (from broker to client (this))
     virtual void parseConnect(const std::string & content);
     virtual void parseConnAck(const std::string & content);
+    virtual void parseDisconnect(const std::string & content);
     virtual void parsePublish(uint8_t firstByte, std::string & content);
     virtual void parsePubAck(const std::string & content);
     virtual void parsePubRec(const std::string & content);
@@ -98,6 +106,7 @@ protected:
     virtual void parseAuth(const std::string & content);
 
     // transmitter (from client to broker)
+    virtual void transmitDisconnect();
     virtual void transmitAuth(bool reauthenticate);
     virtual void transmitPublish(const std::string & topic, const std::string & content, uint8_t flags);
     virtual void transmitPubAck(const std::string & identifier, char reasonCode = '\x00');

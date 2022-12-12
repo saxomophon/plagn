@@ -39,6 +39,7 @@ protected:
 
     virtual void parseConnect(const std::string & content);
     virtual void parseConnAck(const std::string & content);
+    virtual void parseDisconnect(const std::string & content);
     virtual void parsePublish(uint8_t firstByte, std::string & content);
     virtual void parsePubAck(const std::string & content);
     virtual void parsePubRec(const std::string & content);
@@ -49,6 +50,7 @@ protected:
     virtual void parseAuth(const std::string & content);
 
     // transmitter (from client to broker)
+    virtual void transmitDisconnect();
     virtual void transmitAuth(bool reauthenticate);
     virtual void transmitPublish(const std::string & topic, const std::string & content, uint8_t flags);
     virtual void transmitPubAck(const std::string & identifier, char reasonCode = '\x00');

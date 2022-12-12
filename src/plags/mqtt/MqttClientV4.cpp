@@ -254,6 +254,26 @@ catch (exception & e)
 }
 
 /**
+ *-------------------------------------------------------------------------------------------------
+ * @brief parses a disconnection (DISCONNECT) message and acts upon it
+ *
+ * @param content
+ */
+void MqttClientV4::parseDisconnect(const std::string & content) try
+{
+    if (content.size() > 0) cout << "Protocol error, as disconnect should be empty" << endl;
+    m_brokerConnected = false;
+    m_transportLayer->disconnect();
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttClientV4::parseDisconnect()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
  * -------------------------------------------------------------------------------------------------
  * @brief parses the variable header and payload of a PUBLISH MQTT message
  *
@@ -496,6 +516,32 @@ catch (exception & e)
 {
     string errorMsg = e.what();
     errorMsg += "\nSomething happened in MqttClientV4::transmitPublish()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief creates and sends a message of type DISCONNECT
+ *
+ */
+void MqttClientV4::transmitDisconnect() try
+{
+    string data = "";
+
+    prepareFixedHeader(DISCONNECT, 0, data);
+
+    m_transportLayer->transmit(data);
+
+    m_lastTimeOfSent = std::chrono::steady_clock::now();
+
+    m_brokerConnected = false;
+    m_transportLayer->disconnect();
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttClientV4::transmitDisconnect()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
 }

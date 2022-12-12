@@ -168,10 +168,11 @@ catch (exception & e)
  */
 unsigned int MqttInterface::readMqttVarInt(const string & data, uint8_t & offset, size_t pos) const try
 {
+    cout << "Reading " << getBinStringAsAsciiHex(data) << "  from position" << pos << endl;
     size_t initPos = pos;
     uint8_t byte;
     offset = 0;
-    unsigned int number;
+    unsigned int number = 0;
     do
     {
         byte = static_cast<unsigned char>(data.at(pos++));
@@ -322,6 +323,12 @@ size_t MqttInterface::parseIncomingBuffer(string & inBuffer) try
             {
                 string unsuback = inBuffer.substr(0, packetLength + 2);
                 parseUnsubAck(unsuback);
+            }
+            break;
+        case DISCONNECT:
+            {
+                string disconnect = inBuffer.substr(2, packetLength + 2);
+                parseDisconnect(disconnect);
             }
             break;
         case AUTH:

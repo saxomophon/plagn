@@ -152,110 +152,104 @@ map<string, string> MqttClientV5::convertUserPropertiesToMap(const map<MqttPrope
     } while (currentPos < userPropsAsStr.size());
     return userProps;
 }
-
 /**
  *-------------------------------------------------------------------------------------------------
- * @brief generates the properties part of the MQTT message
- * 
- * @param types types of the properties
- * @param data data to the @p types of properties 
- * @return string length, @p types and @p data in the order provided
+ * @brief generates a string for one property only
+ *
+ * @param type types of the property
+ * @param data data to the @p type of property
+ * @return @p type and @p data in the correct format
+ * @remark intended use is to fill a properties string using this method, and then add it to the
+ * payload by adding the size as an MQTT varInt and then the properties string
+ * @sa MqttInterface::makeMqttVarInt()
  */
-string MqttClientV5::prepareProperties(const vector<MqttPropertyType> & types,
-                                       const vector<string> & data) const try
+string MqttClientV5::makeProperty(MqttPropertyType type, const DataType & data) const try
 {
     string props;
-    if (types.size() != data.size()) throw std::invalid_argument("Types and data should have same size!");
-    for (size_t i = 0; i < types.size(); i++)
+    props += type;
+    if (type == FORMAT
+        || type == REQUEST_PROBLEM_INFO
+        || type == REQUEST_RESPONSE_INFO
+        || type == QOS_MAX
+        || type == RETAIN_AVAILABLE
+        || type == WILDCARD_SUB_AVAILABLE
+        || type == SUBSCRIPTION_ID_AVAILABLE
+        || type == SHARED_SUBSCRIPTION_AVAILABLE)
     {
-        props += types.at(i);
-        if (types.at(i) == FORMAT
-            || types.at(i) == REQUEST_PROBLEM_INFO
-            || types.at(i) == REQUEST_RESPONSE_INFO
-            || types.at(i) == QOS_MAX
-            || types.at(i) == RETAIN_AVAILABLE
-            || types.at(i) == WILDCARD_SUB_AVAILABLE
-            || types.at(i) == SUBSCRIPTION_ID_AVAILABLE
-            || types.at(i) == SHARED_SUBSCRIPTION_AVAILABLE)
+        props += static_cast<char>(convertDataTypeToInt(data) & 0xFF);
+    }
+    else if (type == KEEP_ALIVE
+             || type == RECEIVE_MAX
+             || type == TOPIC_ALIAS_MAX
+             || type == TOPIC_ALIAS
+             || type == RECEIVE_MAX)
+    {
+        props += static_cast<char>((convertDataTypeToUint(data) & 0xFF00) >> 8);
+        props += static_cast<char>(convertDataTypeToUint(data) & 0xFF);
+    }
+    else if (type == EXPIRES
+             || type == SESSION_EXPIRE
+             || type == WILL_DELAY
+             || type == PACKET_SIZE_MAX)
+    {
+        unsigned int number = convertDataTypeToUint(data);
+        props += static_cast<char>((number & 0xFF000000) >> 24);
+        props += static_cast<char>((number & 0xFF0000) >> 16);
+        props += static_cast<char>((number & 0xFF00) >> 8);
+        props += static_cast<char>(number & 0xFF);
+    }
+    else if (type == SUBSCRIPTION_ID)
+    {
+        unsigned int number = convertDataTypeToUint(data) & 0x0FFFFFFF;
+        props += makeMqttVarInt(number);
+    }
+    else if (type == CORRELATION_DATA)
+    {
+        props += convertDataTypeToString(data);
+    }
+    else if (type == USER_PROPERTY)
+    {
+        map<string, string> userProps = convertDataTypeToMap(data);
+        bool isFirst = true;
+        for (const pair<string, string> & item : userProps)
         {
-            props += static_cast<char>(convertDataTypeToInt(data.at(i)) & 0xFF);
-        }
-        else if (types.at(i) == KEEP_ALIVE
-                 || types.at(i) == RECEIVE_MAX
-                 || types.at(i) == TOPIC_ALIAS_MAX
-                 || types.at(i) == TOPIC_ALIAS
-                 || types.at(i) == RECEIVE_MAX)
-        {
-            props += static_cast<char>((convertDataTypeToUint(data.at(i)) & 0xFF00) >> 8);
-            props += static_cast<char>(convertDataTypeToUint(data.at(i)) & 0xFF);
-        }
-        else if (types.at(i) == EXPIRES
-                 || types.at(i) == SESSION_EXPIRE
-                 || types.at(i) == WILL_DELAY
-                 || types.at(i) == PACKET_SIZE_MAX)
-        {
-            unsigned int number = convertDataTypeToUint(data.at(i));
-            props += static_cast<char>((number & 0xFF000000) >> 24);
-            props += static_cast<char>((number & 0xFF0000) >> 16);
-            props += static_cast<char>((number & 0xFF00) >> 8);
-            props += static_cast<char>(number & 0xFF);
-        }
-        else if (types.at(i) == SUBSCRIPTION_ID)
-        {
-            unsigned int number = convertDataTypeToUint(data.at(i)) & 0x0FFFFFFF;
-            props += makeMqttVarInt(number);
-        }
-        else if (types.at(i) == CORRELATION_DATA)
-        {
-            props += data.at(i);
-        }
-        else if (types.at(i) == USER_PROPERTY)
-        {
-            map<string, string> userProps = convertDataTypeToMap(data.at(i));
-            bool isFirst = true;
-            for (const pair<string, string> & item : userProps)
+            if (isFirst)
             {
-                if (isFirst)
-                {
-                    isFirst = false;
-                }
-                else
-                {
-                    props += types.at(i);
-                }
-                props += makeMqttString(item.first);
-                props += makeMqttString(item.second);
+                isFirst = false;
             }
-        }
-        else
-        {
-            props += makeMqttString(data.at(i));
+            else
+            {
+                props += type;
+            }
+            props += makeMqttString(item.first);
+            props += makeMqttString(item.second);
         }
     }
-    size_t length = props.size();
-    if (props.size() > 0x0FFFFFFF) props = props.substr(0x0FFFFFFF);
-    props = makeMqttVarInt(length & 0x0FFFFFFF) + props;
+    else
+    {
+        props += makeMqttString(convertDataTypeToString(data));
+    }
     return props;
 }
 catch (exception & e)
 {
     string errorMsg = e.what();
-    errorMsg += "\nSomething happened in MqttClientV5::prepareProperties()";
+    errorMsg += "\nSomething happened in MqttClientV5::makeProperty()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
 }
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief convenience function to create the data for a connection telegram for the broker
+ * @brief convenience function to create the data for a connection message for the broker
  *
- * @return string the version specific connect telegram using config data
+ * @return string the version specific connect message using config data
  */
 string MqttClientV5::createConnectMessage() try
 {
     string connectMsg;
     connectMsg += makeMqttString("MQTT");
-    connectMsg += static_cast<char>(m_protocolVersion); // v. 3.1.1
+    connectMsg += static_cast<char>(m_protocolVersion); // v. 5
     uint8_t flags = 0;
     if (m_userName != "")
     {
@@ -270,7 +264,7 @@ string MqttClientV5::createConnectMessage() try
         flags |= 0x04; // will message will be added
         flags |= 0x20; // will retain (= inform new subscribers, that <this> disconnected abnormally)
     }
-    if (m_cleanSessions) flags |= 0x02;  // := clean session(v. 3.1.1) or clean start(v. 5.0)
+    if (m_cleanSessions) flags |= 0x02;  // := clean start(v. 5.0)
     // 0x01:= reserved last bit: always zero
     connectMsg += flags;
     // add keepalive
@@ -280,13 +274,9 @@ string MqttClientV5::createConnectMessage() try
     vector<MqttPropertyType> types;
     vector<string> dataToTypes;
     string dataToType;
+    string properties;
 
-    dataToType += char((m_sessionExpire & 0xFF000000) >> 24);
-    dataToType += char((m_sessionExpire & 0x00FF0000) >> 16);
-    dataToType += char((m_sessionExpire & 0x0000FF00) >> 8);
-    dataToType += char((m_sessionExpire & 0x000000FF));
-    types.push_back(SESSION_EXPIRE);
-    dataToTypes.push_back(dataToType);
+    properties = makeProperty(SESSION_EXPIRE, m_sessionExpire);
 
     // receive maximum will not be set, as use-case is unclear
     // maximum packer size will not be set, as use-case is unclear
@@ -294,22 +284,19 @@ string MqttClientV5::createConnectMessage() try
 
     // always ask for info in connack message
     // unlikely to result in a benefit, when made user-settable
-    dataToType = "\x01";
-    types.push_back(REQUEST_RESPONSE_INFO);
-    dataToTypes.push_back(dataToType);
+    int on = 1;
+    properties += makeProperty(REQUEST_RESPONSE_INFO, on);
 
     // always ask for problem description in connack message
     // unlikely to result in a benefit, when made user-settable
-    dataToType = "\x01";
-    types.push_back(REQUEST_PROBLEM_INFO);
-    dataToTypes.push_back(dataToType);
+    properties += makeProperty(REQUEST_PROBLEM_INFO, on);
 
     // no user-property will be set, as configuration is unclear
     // no authentication method will be set, as none is implemented yet
     // no authentication data will be set, see above
 
     // for now, no authentication method is correctly implemented, so no authentication flags
-    connectMsg += prepareProperties(types, dataToTypes);
+    connectMsg += makeMqttVarInt(properties.size()) + properties;
 
     // add client ID
     connectMsg += makeMqttString(m_clientId);
@@ -322,17 +309,10 @@ string MqttClientV5::createConnectMessage() try
         dataToType = "";
 
         // will delay
-        dataToType += char((m_willDelay & 0xFF000000) >> 24);
-        dataToType += char((m_willDelay & 0x00FF0000) >> 16);
-        dataToType += char((m_willDelay & 0x0000FF00) >> 8);
-        dataToType += char((m_willDelay & 0x000000FF));
-        types.push_back(WILL_DELAY);
-        dataToTypes.push_back(dataToType);
+        properties = makeProperty(WILL_DELAY, m_willDelay);
 
         // will format
-        dataToType = static_cast<char>(m_willIsText);
-        types.push_back(FORMAT);
-        dataToTypes.push_back(dataToType);
+        properties += makeProperty(FORMAT, static_cast<int>(m_willIsText));
 
         // will content type will not be set, as use-case is unclear
         // response topic will not be set, as the request/response mechanism is not yet supported
@@ -340,15 +320,17 @@ string MqttClientV5::createConnectMessage() try
         // response topic will not be set, as the request/response mechanism is not yet supported
         // user property will not be set, as configuration seems too complicated
 
-        connectMsg += prepareProperties(types, dataToTypes);
+        connectMsg += makeMqttVarInt(properties.size()) + properties;
         connectMsg += makeMqttString(m_willTopic);
         connectMsg += makeMqttString(m_willMessage);
     }
 
     if (m_userName != "") connectMsg += makeMqttString(m_userName);
     if (m_userPass != "") connectMsg += m_userPass;
-    
+
     prepareFixedHeader(CONNECT, 0, connectMsg);
+
+    cout << "Connect with: " << getBinStringAsAsciiHex(connectMsg) << endl;
 
     return connectMsg;
 }
@@ -380,9 +362,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses a connection acknowledgment (conn ack) telegram and acts upon it
+ * @brief parses a connection acknowledgment (conn ack) message and acts upon it
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parseConnAck(const string & content) try
 {
@@ -492,7 +474,7 @@ void MqttClientV5::parseConnAck(const string & content) try
     cout << "PROPERTIES IN CONNACK \t";
     for (const pair<MqttPropertyType, string> & property : properties)
     {
-        cout << std::hex << (property.first < 0x10 ? "0" : "") << property.first;
+        cout << (property.first < 0x10 ? "0" : "") << std::hex << static_cast<int>(property.first);
         cout << " : " << property.second << "\t";
     }
     cout << endl;
@@ -506,11 +488,37 @@ catch (exception & e)
 }
 
 /**
+ *-------------------------------------------------------------------------------------------------
+ * @brief parses a disconnection (DISCONNECT) message and acts upon it
+ * 
+ * @param content 
+ */
+void MqttClientV5::parseDisconnect(const std::string & content) try
+{
+    uint8_t reason = static_cast<uint8_t>(content.at(0));
+    if (reason & 0x80) cout << "Disconnect because of error: " << std::hex << static_cast<int>(reason) << endl;
+
+    uint8_t offset;
+    unsigned int size = readMqttVarInt(content, offset, 1);
+    map<MqttPropertyType, string> properties = readProperties(content.substr(1 + offset, size));
+
+    m_brokerConnected = false;
+    m_transportLayer->disconnect();
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttClientV5::parseDisconnect()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
  * -------------------------------------------------------------------------------------------------
- * @brief parses the variable header and payload of a PUBLISH MQTT telegram
+ * @brief parses the variable header and payload of a PUBLISH MQTT message
  *
- * @param firstByte the first byte of the fixed header of the MQTT telegram
- * @param content the variable header and payload of the MQTT telegram
+ * @param firstByte the first byte of the fixed header of the MQTT message
+ * @param content the variable header and payload of the MQTT message
  */
 void MqttClientV5::parsePublish(uint8_t firstByte, string & content) try
 {
@@ -567,9 +575,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses a PUBACK (publish acknowledgment) MQTT telegram
+ * @brief parses a PUBACK (publish acknowledgment) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parsePubAck(const string & content) try
 {
@@ -597,9 +605,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses a PUBREC (publish received) MQTT telegram
+ * @brief parses a PUBREC (publish received) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parsePubRec(const string & content) try
 {
@@ -630,9 +638,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses a PUBREL (publish release) MQTT telegram
+ * @brief parses a PUBREL (publish release) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parsePubRel(const string & content) try
 {
@@ -663,9 +671,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parases a PUBCOMP (publish complete) MQTT telegram
+ * @brief parases a PUBCOMP (publish complete) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parsePubComp(const string & content) try
 {
@@ -693,9 +701,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses a SUBACK (subscription acknowledgment) MQTT telegram
+ * @brief parses a SUBACK (subscription acknowledgment) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parseSubAck(const string & content) try
 {
@@ -736,9 +744,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses an UNSUBACK (unsubscribe acknowledgment) MQTT telegram
+ * @brief parses an UNSUBACK (unsubscribe acknowledgment) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parseUnsubAck(const string & content) try
 {
@@ -779,9 +787,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief parses an AUTH (unsubscribe acknowledgment) MQTT telegram
+ * @brief parses an AUTH (unsubscribe acknowledgment) MQTT message
  *
- * @param content the complete telegram
+ * @param content the complete message
  */
 void MqttClientV5::parseAuth(const string & content) try
 {
@@ -802,30 +810,24 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a telegram of type AUTH
+ * @brief creates and sends a message of type AUTH
  * @details AUTH means to authenticate this client at the broker (server).
  * @param reauthenticate whether or not this is an intial authentication (false), or not (true)
  */
 void MqttClientV5::transmitAuth(bool reauthenticate) try
 {
-    if (m_protocolVersion < 5) return;
-
     string data;
+    string properties;
     data += reauthenticate ? '\x19' : '\x18';
-    vector<MqttPropertyType> types;
-    vector<string> dataToTypes;
 
-    types.push_back(AUTH_METHOD);
-    dataToTypes.push_back(m_authenticationType);
+    properties = makeProperty(AUTH_METHOD, m_authenticationType);
 
     // TODO: generate authentication data depending on method and iteration of method
-    types.push_back(AUTH_DATA);
-    dataToTypes.push_back(m_authenticationData);
+    properties += makeProperty(AUTH_DATA, m_authenticationData);
 
-    types.push_back(REASON);
-    dataToTypes.push_back(m_authenticationType);
+    properties += makeProperty(REASON, m_authenticationType);
 
-    data += prepareProperties(types, dataToTypes);
+    data += makeMqttVarInt(properties.size()) + properties;
 
     prepareFixedHeader(AUTH, 0, data);
 
@@ -842,8 +844,40 @@ catch (exception & e)
 }
 
 /**
+ *-------------------------------------------------------------------------------------------------
+ * @brief creates and sends a message of type DISCONNECT
+ * 
+ */
+void MqttClientV5::transmitDisconnect() try
+{
+    string data;
+
+    // add reason
+    data += m_willMessage != "" ? "\x04" : "\x00";
+
+    // add zero properties (for now)
+    data += "\x00";
+
+    prepareFixedHeader(DISCONNECT, 0, data);
+
+    m_transportLayer->transmit(data);
+
+    m_lastTimeOfSent = std::chrono::steady_clock::now();
+
+    m_brokerConnected = false;
+    m_transportLayer->disconnect();
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttClientV5::transmitDisconnect()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a telegram of type PUBLISH
+ * @brief creates and sends a message of type PUBLISH
  * @details PUBLISH means to distribute data ( @p content ) among the subscribers of @p topic .
  * @param topic the topic under which the @p content is published
  * @param content the content to publish (may be values, may be text)
@@ -863,14 +897,7 @@ void MqttClientV5::transmitPublish(const string & topic, const string & content,
         data += static_cast<char>(identifier & 0x00FF);
     }
 
-    if (m_protocolVersion < 5)
-    {
-        data += content;
-    }
-    else if (m_protocolVersion == 5)
-    {
-        //TODO: create writeProperty to add content as such
-    }
+    data += content;
 
     prepareFixedHeader(PUBLISH, flags, data);
 
@@ -890,9 +917,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a PUBACK (publish acknowledge) telegram
- * @details these need to be sent, when this receives a PUBLISH telegram with qos == 1
- * @param identifier identifier of the received PUBLISH telegram
+ * @brief creates and sends a PUBACK (publish acknowledge) message
+ * @details these need to be sent, when this receives a PUBLISH message with qos == 1
+ * @param identifier identifier of the received PUBLISH message
  * @param reasonCode MQTT v.5 adds a reason code, to convey more info. this is that
  */
 void MqttClientV5::transmitPubAck(const string & identifier, char reasonCode) try
@@ -921,9 +948,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a PUBREC (publish received) telegram
- * @details these need to be sent, when this receives a PUBLISH telegram with qos == 2
- * @param identifier identifier of the received PUBLISH telegram
+ * @brief creates and sends a PUBREC (publish received) message
+ * @details these need to be sent, when this receives a PUBLISH message with qos == 2
+ * @param identifier identifier of the received PUBLISH message
  * @param reasonCode MQTT v.5 adds a reason code, to convey more info. this is that
  */
 void MqttClientV5::transmitPubRec(const string & identifier, char reasonCode) try
@@ -952,9 +979,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a PUBREL (publish release) telegram
- * @details these need to be sent, when this receives a PUBREC telegram
- * @param identifier identifier of the received PUBREC telegram
+ * @brief creates and sends a PUBREL (publish release) message
+ * @details these need to be sent, when this receives a PUBREC message
+ * @param identifier identifier of the received PUBREC message
  * @param reasonCode MQTT v.5 adds a reason code, to convey more info. this is that
  */
 void MqttClientV5::tranmitPubRel(const string & identifier, char reasonCode) try
@@ -983,9 +1010,9 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a PUBCOMP (publish complete) telegram
- * @details these need to be sent, when this receives a PUBREL telegram
- * @param identifier identifier of the received PUBREL telegram
+ * @brief creates and sends a PUBCOMP (publish complete) message
+ * @details these need to be sent, when this receives a PUBREL message
+ * @param identifier identifier of the received PUBREL message
  * @param reasonCode MQTT v.5 adds a reason code, to convey more info. this is that
  */
 void MqttClientV5::transmitPubComp(const string & identifier, char reasonCode) try
@@ -1014,7 +1041,7 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a SUBSCRIBE telegram
+ * @brief creates and sends a SUBSCRIBE message
  *
  * @param topic name of the subscription channel (tree structure)
  * @param qos quality of service targeted for this subscription
@@ -1028,15 +1055,11 @@ void MqttClientV5::transmitSubscribe(const string & topic, uint8_t qos) try
     data += static_cast<char>((identifier & 0xFF00) >> 8);
     data += static_cast<char>(identifier & 0x00FF);
 
-    if (m_protocolVersion < 5)
-    {
-        data += makeMqttString(topic);
-        data += static_cast<char>(qos & 0x03);
-    }
-    else if (m_protocolVersion == 5)
-    {
-        //TODO: create writeProperty to add content as such
-    }
+    // add zero properties (for now)
+    data += "\x00";
+
+    data += makeMqttString(topic);
+    data += static_cast<char>(qos & 0x03);
 
     prepareFixedHeader(SUBSCRIBE, 2, data);
 
@@ -1056,7 +1079,7 @@ catch (exception & e)
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @brief creates and sends a UNSUBSCRIBE telegram
+ * @brief creates and sends a UNSUBSCRIBE message
  *
  * @param topic name of the subscribed channel (tree structure) to unsubscribe from
  */
