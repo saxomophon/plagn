@@ -24,7 +24,6 @@
 #include <vector>
 
 // own includes
-#include <lua.hpp>
 
 // boost includes
 #include <boost/algorithm/string.hpp>
@@ -55,6 +54,21 @@ PlagHttpServerConnection::pointer PlagHttpServerConnection::create(boost::asio::
 tcp::socket & PlagHttpServerConnection::socket()
 {
     return m_sock;
+}
+
+int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
+{
+    string testInput = lua_tostring(L, -1);
+    cout << "sendDatagramInterface(" << testInput << ")" << endl;
+    m_ptrParentPlagHttpServer->sendDatagram();
+    return 0;
+}
+
+int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
+{
+    cout << "resvDatagramInterface()" << endl;
+    m_ptrParentPlagHttpServer->resvDatagram();
+    return 0;
 }
 
 void PlagHttpServerConnection::start()
@@ -119,6 +133,22 @@ void PlagHttpServerConnection::start()
             // create global for version
             lua_pushstring(L, req.getHttpVersion().c_str());
             lua_setglobal(L, "reqHttpVersion");
+
+            // pushing the functions for dgram to lua
+            // first store "this" in L's extra storage
+            *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L)) = this;
+            // send dgram
+            lua_pushcfunction(L, [](lua_State * L) -> int { 
+                PlagHttpServerConnection * ptrThis = *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L));
+                return ptrThis->sendDatagramInterface(L);
+            });
+            lua_setglobal(L, "sendDatagram");
+            // resv dgram
+            lua_pushcfunction(L, [](lua_State * L) -> int {
+                PlagHttpServerConnection * ptrThis = *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L));
+                return ptrThis->resvDatagramInterface(L);
+            });
+            lua_setglobal(L, "resvDatagram");
 
             // running the script
             if (luaL_dofile(L, "../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
@@ -439,6 +469,16 @@ std::string PlagHttpServerHttpData::getEndpoint()
 PlagHttpServer::httpMethod PlagHttpServerHttpData::getMethod()
 {
     return m_method;
+}
+
+void PlagHttpServer::sendDatagram()
+{
+    cout << "sendDatagram()" << endl;
+}
+
+void PlagHttpServer::resvDatagram()
+{
+    cout << "resvDatagram()" << endl;
 }
 
 // Http Response Codes and Messages 

@@ -28,6 +28,8 @@
 #include <list>
 #include <map>
 
+// lua includes
+#include <lua.hpp>
 
 // boost includes
 #include <boost/asio.hpp>
@@ -64,6 +66,9 @@ private:
     PlagHttpServer * m_ptrParentPlagHttpServer;
     
     std::string getRawRequest(); //!< function for getting the raw request from sock
+
+    int sendDatagramInterface(lua_State * L); //!< function for sending a dgram from lua
+    int resvDatagramInterface(lua_State * L); //!< function for resv a dgram to lua 
 };
 
 /**
@@ -190,7 +195,7 @@ public:
 protected:
     // interface for the Lua scripts to use datagrams
     void sendDatagram(void); // TODO: the new defined datagram has to be put here
-    void getDatagram(void); // TODO: the new defined datagram has to be put here
+    void resvDatagram(void); // TODO: the new defined datagram has to be put here
 
 
 private:

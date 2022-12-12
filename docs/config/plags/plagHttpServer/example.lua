@@ -38,3 +38,7 @@ respContent = [[<!DOCTYPE html>
 respStatus = {}
 respStatus["code"] = 200
 respStatus["message"] = "OK"
+
+-- test the functions
+sendDatagram("Das ist ein Test")
+resvDatagram()
