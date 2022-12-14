@@ -131,6 +131,66 @@ catch (exception & e)
 }
 
 /**
+ *-------------------------------------------------------------------------------------------------
+ * @brief creates a string of up to four bytes representing an MQTT variable integer
+ * 
+ * @param value a number of up to 28 bit size
+ * @return string 
+ */
+string MqttInterface::makeMqttVarInt(unsigned int value) const try
+{
+    string varInt;
+    value &= 0x0FFFFFFF;
+    if (value > 0x001FFFFF) varInt += static_cast<char>(((value & 0x0FE00000) >> 21) | 0x80);
+    if (value > 0x00003FFF) varInt += static_cast<char>(((value & 0x001FC000) >> 14) | 0x80);
+    if (value > 0x0000007F) varInt += static_cast<char>(((value & 0x00003F80) >> 7) | 0x80);
+    varInt += static_cast<char>(value & 0x7F);
+    return varInt;
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttInterface::makeMqttVarInt()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief reads a variable int from a @p data string, containing raw bytes
+ *
+ * @param data the entire data string, from which to read the variable int
+ * @param offset number of bytes read
+ * @param pos Where to start reading in @p data
+ * @return unsigned int
+ */
+unsigned int MqttInterface::readMqttVarInt(const string & data, uint8_t & offset, size_t pos) const try
+{
+    size_t initPos = pos;
+    uint8_t byte;
+    offset = 0;
+    unsigned int number = 0;
+    do
+    {
+        byte = static_cast<unsigned char>(data.at(pos++));
+        number |= byte & 0x7F;
+        if (byte & 0x80) number <<= 7;
+        ++offset;
+    } while (byte & 0x80 && pos - initPos <= 4);
+    if (pos - initPos >= 5) throw std::invalid_argument("VarInts have a max size of 4 bytes!");
+    return number;
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in MqttInterface::readMqttVarInt()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
  * -------------------------------------------------------------------------------------------------
  * @brief generates the fixed header of an MQTT telegram and prepends it to @p content .
  * @details An MQTT fixed header always has two item, the first containing @p type and @p flags in
@@ -262,6 +322,12 @@ size_t MqttInterface::parseIncomingBuffer(string & inBuffer) try
             {
                 string unsuback = inBuffer.substr(0, packetLength + 2);
                 parseUnsubAck(unsuback);
+            }
+            break;
+        case DISCONNECT:
+            {
+                string disconnect = inBuffer.substr(2, packetLength + 2);
+                parseDisconnect(disconnect);
             }
             break;
         case AUTH:

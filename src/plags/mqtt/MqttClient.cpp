@@ -96,7 +96,10 @@ catch (exception & e)
 void MqttClient::poll() try
 {
     resendOldData();
-    m_transportBuffer = m_transportLayer->receiveBytes();
+    if (m_transportLayer->getAvailableBytesCount() > 0)
+    {
+        m_transportBuffer += m_transportLayer->receiveBytes();
+    }
     if (m_transportBuffer.size() > 0) parseIncomingBuffer(m_transportBuffer);
 }
 catch (exception & e)
@@ -157,6 +160,9 @@ void MqttClient::connect() try
     connAckMsg = m_transportLayer->receiveBytes(4);
     if (connAckMsg.at(0) == static_cast<char>(CONNACK << 4))
     {
+        uint8_t offset;
+        unsigned int neededLength = readMqttVarInt(connAckMsg, offset, 1);
+        if (neededLength > 2) connAckMsg += m_transportLayer->receiveBytes(neededLength - 2);
         parseConnAck(connAckMsg);
         if (!m_brokerConnected)
         {
@@ -195,14 +201,14 @@ catch (exception & e)
 bool MqttClient::isConnected() try
 {
     if (m_lastTimeReceived < m_lastTimeOfSent
-        && m_lastTimeOfSent - m_lastTimeReceived > std::chrono::milliseconds(2 * m_keepAliveInterval))
+        && m_lastTimeOfSent - m_lastTimeReceived > std::chrono::seconds(2 * m_keepAliveInterval))
     {
         cout << "Disconnect because of timeout" << endl;
         disconnect();
     }
     bool isConnected = m_transportLayer->isConnected() && m_brokerConnected;
     if (isConnected
-        && std::chrono::steady_clock::now() - m_lastTimeOfSent > std::chrono::milliseconds(m_keepAliveInterval))
+        && std::chrono::steady_clock::now() - m_lastTimeOfSent > std::chrono::seconds(m_keepAliveInterval))
     {
         transmitPingReq();
     }
@@ -223,11 +229,7 @@ catch (exception & e)
  */
 void MqttClient::disconnect() try
 {
-    //TODO: MQTT Broker communication to disconnect (send DISCONNECT, wait for DISCONNECT ACK)
-    string disconnectMsg;
-    disconnectMsg += static_cast<char>(DISCONNECT << 4);
-    // TODO: set flags and length
-    if (m_transportLayer->isConnected()) m_transportLayer->transmit(disconnectMsg);
+    if (m_transportLayer->isConnected()) this->transmitDisconnect();
     m_brokerConnected = false;
     m_transportLayer->disconnect();
 }

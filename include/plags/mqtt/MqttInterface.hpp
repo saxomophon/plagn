@@ -51,6 +51,9 @@ protected:
     // mqtt string helper
     virtual std::string makeMqttString(const std::string & text) const;
     virtual std::string extractMqttString(std::string & text, size_t startPos = 0) const;
+    virtual std::string makeMqttVarInt(unsigned int value) const;
+    virtual unsigned int readMqttVarInt(const std::string & data, uint8_t & offset,
+                                        size_t startPos = 0) const;
     // datagram generation convenience stuff
     virtual void prepareFixedHeader(MqttMessageType type, uint8_t flags,
                                     std::string & content) const;
@@ -66,6 +69,7 @@ protected:
     // parser (all abstract)
     virtual void parseConnect(const std::string & content) = 0;
     virtual void parseConnAck(const std::string & content) = 0;
+    virtual void parseDisconnect(const std::string & content) = 0;
     virtual void parsePublish(uint8_t firstByte, std::string & content) = 0;
     virtual void parsePubAck(const std::string & content) = 0;
     virtual void parsePubRec(const std::string & content) = 0;
@@ -76,6 +80,7 @@ protected:
     virtual void parseAuth(const std::string & content) = 0;
 
     // transmitter (all abstract)
+    virtual void transmitDisconnect() = 0;
     virtual void transmitAuth(bool reauthenticate) = 0;
     virtual void transmitPublish(const std::string & topic, const std::string & content, uint8_t flags) = 0;
     virtual void transmitPubAck(const std::string & identifier, char reasonCode = '\x00') = 0;

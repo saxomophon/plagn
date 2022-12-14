@@ -28,6 +28,7 @@
 // own includes
 #include "DatagramMqtt.hpp"
 #include "MqttClientV4.hpp"
+#include "MqttClientV5.hpp"
 
 // self include
 #include "PlagMqtt.hpp"
@@ -85,7 +86,6 @@ void PlagMqtt::readConfig() try
     m_port = getOptionalParameter<uint16_t>("port", 1883);
 
     m_keepAliveInterval = getOptionalParameter<unsigned int>("keepAliveInterval", 300);
-    m_keepAliveInterval *= 1000; // user shall input in seconds, but we'll need miliiseconds
 
     m_userName = getOptionalParameter<string>("userName", string("plagn"));
     m_userPass = getOptionalParameter<string>("userPass", string("plagn"));
@@ -133,6 +133,16 @@ void PlagMqtt::init() try
                                                                 emptyString, emptyString,
                                                                 m_defaultSubscriptions));
     }
+    else if (m_mqttVersion == 5)
+    {
+
+        string emptyString = "";
+        m_interface = shared_ptr<MqttClientV5>(new MqttClientV5(*this, m_brokerIP, m_port, "plagn",
+                                                                0, m_userName, m_userPass,
+                                                                m_keepAliveInterval, m_cleanSessions,
+                                                                emptyString, emptyString,
+                                                                m_defaultSubscriptions));
+    }
     m_interface->init();
 }
 catch (exception & e)
@@ -150,9 +160,9 @@ catch (exception & e)
  */
 bool PlagMqtt::loopWork() try
 {
-    if (m_mqttVersion < 5)
+    if (m_mqttVersion <= 5)
     {
-        shared_ptr<MqttClientV4> client = dynamic_pointer_cast<MqttClientV4>(m_interface);
+        shared_ptr<MqttClient> client = dynamic_pointer_cast<MqttClient>(m_interface);
         if (!client->isConnected())
         {
             // try to connect, when disconnected
