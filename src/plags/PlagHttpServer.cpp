@@ -58,16 +58,41 @@ tcp::socket & PlagHttpServerConnection::socket()
 
 int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
 {
-    string testInput = lua_tostring(L, -1);
-    cout << "sendDatagramInterface(" << testInput << ")" << endl;
-    m_ptrParentPlagHttpServer->sendDatagram();
+    // getting the table as map
+    map<string, DataType> dgramMap;
+    if (lua_istable(L, -1))
+    {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0)
+        {   
+            auto key = lua_tostring(L, -2);
+            if (lua_isinteger(L, -1))
+            {
+                auto val = lua_tointeger(L, -1);
+                dgramMap.insert(pair<string, int>(key, val));
+            }
+            else if (lua_isnumber(L, -1))
+            {
+                auto val = lua_tonumber(L, -1);
+                dgramMap.insert(pair<string, double>(key, val));
+            }
+            else if (lua_isstring(L, -1))
+            {
+                auto val = lua_tostring(L, -1);
+                dgramMap.insert(pair<string, string>(key, val));
+            }
+            lua_pop(L, 1);
+        }
+    }
+    shared_ptr<DatagramMap> dataToSend(new DatagramMap(m_ptrParentPlagHttpServer->getName(), dgramMap));
+    m_ptrParentPlagHttpServer->sendDatagram(dataToSend);
     return 0;
 }
 
 int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
 {
     cout << "resvDatagramInterface()" << endl;
-    m_ptrParentPlagHttpServer->resvDatagram();
+    //m_ptrParentPlagHttpServer->resvDatagram();
     return 0;
 }
 
@@ -471,14 +496,18 @@ PlagHttpServer::httpMethod PlagHttpServerHttpData::getMethod()
     return m_method;
 }
 
-void PlagHttpServer::sendDatagram()
+void PlagHttpServer::sendDatagram(std::shared_ptr<DatagramMap> dgram)
 {
-    cout << "sendDatagram()" << endl;
+    cout << "send dgram: " << dgram->toString() << endl;
+    appendToDistribution(dgram);
 }
 
-void PlagHttpServer::resvDatagram()
+std::shared_ptr<DatagramMap> PlagHttpServer::resvDatagram()
 {
+    // TODO: Implement this function
     cout << "resvDatagram()" << endl;
+
+    return nullptr;
 }
 
 // Http Response Codes and Messages 

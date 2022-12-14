@@ -39,6 +39,7 @@
 
 // own includes
 #include "Plag.hpp"
+#include "DatagramMap.hpp"
 
 // forward declaration
 class PlagHttpServer;
@@ -194,8 +195,8 @@ public:
 
 protected:
     // interface for the Lua scripts to use datagrams
-    void sendDatagram(void); // TODO: the new defined datagram has to be put here
-    void resvDatagram(void); // TODO: the new defined datagram has to be put here
+    void sendDatagram(std::shared_ptr<DatagramMap> dgram); // TODO: the new defined datagram has to be put here
+    std::shared_ptr<DatagramMap> resvDatagram(void); // TODO: the new defined datagram has to be put here
 
 
 private:

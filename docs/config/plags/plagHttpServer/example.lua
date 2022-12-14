@@ -40,5 +40,8 @@ respStatus["code"] = 200
 respStatus["message"] = "OK"
 
 -- test the functions
-sendDatagram("Das ist ein Test")
-resvDatagram()
+data = {}
+data["cmd"] = "sendInfo"
+data["info"] = "test message"
+sendDatagram(data)
+--resvDatagram()
