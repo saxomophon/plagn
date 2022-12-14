@@ -162,7 +162,6 @@ void MqttClient::connect() try
     {
         uint8_t offset;
         unsigned int neededLength = readMqttVarInt(connAckMsg, offset, 1);
-        cout << "Needed length should be: " << neededLength << endl;
         if (neededLength > 2) connAckMsg += m_transportLayer->receiveBytes(neededLength - 2);
         parseConnAck(connAckMsg);
         if (!m_brokerConnected)
@@ -230,11 +229,7 @@ catch (exception & e)
  */
 void MqttClient::disconnect() try
 {
-    //TODO: MQTT Broker communication to disconnect (send DISCONNECT, wait for DISCONNECT ACK)
-    string disconnectMsg;
-    disconnectMsg += static_cast<char>(DISCONNECT << 4);
-    // TODO: set flags and length
-    if (m_transportLayer->isConnected()) m_transportLayer->transmit(disconnectMsg);
+    if (m_transportLayer->isConnected()) this->transmitDisconnect();
     m_brokerConnected = false;
     m_transportLayer->disconnect();
 }

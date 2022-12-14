@@ -23,6 +23,7 @@
 #include <iostream>
 
 // own include
+#include "DatagramMqtt.hpp"
 #include "DatagramUdp.hpp"
 
 // self include
@@ -42,8 +43,10 @@ Kable::Kable(const boost::property_tree::ptree & propTree, const string & rootNa
              weak_ptr<PlagInterface> parent, weak_ptr<PlagInterface> target) :
     PropertyTreeReader(propTree, rootName),
     m_parent(parent),
-    m_target(target)
+    m_target(target),
+    m_targetType(none)
 {
+    if (!target.expired()) m_targetType = target.lock()->getType();
     readConfig();
 }
 
@@ -90,6 +93,11 @@ bool Kable::assignTarget(weak_ptr<PlagInterface> target) try
         m_target = target;
         return true;
     }
+    else if (m_target.expired() || m_targetType == none)
+    {
+        m_target = target;
+        m_targetType = target.lock()->getType();
+    }
     return false;
 }
 catch (exception & e)
@@ -128,6 +136,9 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
     string sourcePlag = get<string>(sourceDatagram->getData("sourcePlag"));
     switch (m_targetType)
     {
+    case PlagType::MQTT:
+        translatedDatagram = shared_ptr<DatagramMqtt>(new DatagramMqtt(sourcePlag));
+        break;
     case PlagType::UDP:
         translatedDatagram = shared_ptr<DatagramUdp>(new DatagramUdp(sourcePlag));
         break;

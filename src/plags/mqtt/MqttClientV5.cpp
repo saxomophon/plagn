@@ -330,8 +330,6 @@ string MqttClientV5::createConnectMessage() try
 
     prepareFixedHeader(CONNECT, 0, connectMsg);
 
-    cout << "Connect with: " << getBinStringAsAsciiHex(connectMsg) << endl;
-
     return connectMsg;
 }
 catch (exception & e)
@@ -468,16 +466,10 @@ void MqttClientV5::parseConnAck(const string & content) try
     }
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset, 4);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
-
-    // for debugging only (TODO: remove)
-    cout << "PROPERTIES IN CONNACK \t";
-    for (const pair<MqttPropertyType, string> & property : properties)
+    if (size > 0)
     {
-        cout << (property.first < 0x10 ? "0" : "") << std::hex << static_cast<int>(property.first);
-        cout << " : " << property.second << "\t";
+        map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
     }
-    cout << endl;
 }
 catch (exception & e)
 {
@@ -500,7 +492,10 @@ void MqttClientV5::parseDisconnect(const std::string & content) try
 
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset, 1);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(1 + offset, size));
+    if (size > 0)
+    {
+        map<MqttPropertyType, string> properties = readProperties(content.substr(1 + offset, size));
+    }
 
     m_brokerConnected = false;
     m_transportLayer->disconnect();
@@ -545,7 +540,10 @@ void MqttClientV5::parsePublish(uint8_t firstByte, string & content) try
 
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(offset, size));
+    if (size > 0)
+    {
+        map<MqttPropertyType, string> properties = readProperties(content.substr(offset, size));
+    }
     content = content.substr(offset + size);
 
     string msgContent = "";
@@ -591,7 +589,10 @@ void MqttClientV5::parsePubAck(const string & content) try
 
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset, 5);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+    if (size > 0)
+    {
+        map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+    }
 
     removeNonAcknowledgedData(identifier);
 }
@@ -617,12 +618,19 @@ void MqttClientV5::parsePubRec(const string & content) try
     identifier |= static_cast<uint16_t>(content.at(3));
     string identifierAsStr = content.substr(2, 2);
 
-    uint8_t reason = static_cast<uint8_t>(content.at(4));
-    if (reason & 0x80) cout << "Error in PUBREC: " << std::hex << reason << endl;
+    // reason and properties may be omitted, if everything is ok
+    if (content.size() > 4)
+    {
+        uint8_t reason = static_cast<uint8_t>(content.at(4));
+        if (reason & 0x80) cout << "Error in PUBREC: " << std::hex << reason << endl;
 
-    uint8_t offset;
-    unsigned int size = readMqttVarInt(content, offset, 5);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        uint8_t offset;
+        unsigned int size = readMqttVarInt(content, offset, 5);
+        if (size > 0)
+        {
+            map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        }
+    }
 
     removeNonAcknowledgedData(identifier);
 
@@ -650,12 +658,19 @@ void MqttClientV5::parsePubRel(const string & content) try
     identifier |= static_cast<uint16_t>(content.at(3));
     string identifierAsStr = content.substr(2, 2);
 
-    uint8_t reason = static_cast<uint8_t>(content.at(4));
-    if (reason & 0x80) cout << "Error in PUBREL: " << std::hex << reason << endl;
+    // reason and properties may be omitted, if everything is ok
+    if (content.size() > 4)
+    {
+        uint8_t reason = static_cast<uint8_t>(content.at(4));
+        if (reason & 0x80) cout << "Error in PUBREL: " << std::hex << reason << endl;
 
-    uint8_t offset;
-    unsigned int size = readMqttVarInt(content, offset, 5);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        uint8_t offset;
+        unsigned int size = readMqttVarInt(content, offset, 5);
+        if (size > 0)
+        {
+            map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        }
+    }
 
     removeNonAcknowledgedData(identifier);
 
@@ -682,12 +697,19 @@ void MqttClientV5::parsePubComp(const string & content) try
     uint16_t identifier = static_cast<uint16_t>(content.at(2)) << 8;
     identifier |= static_cast<uint16_t>(content.at(3));
 
-    uint8_t reason = static_cast<uint8_t>(content.at(4));
-    if (reason & 0x80) cout << "Error in PUBCOMP: " << std::hex << reason << endl;
+    // reason and properties may be omitted, if everything is ok
+    if (content.size() > 4)
+    {
+        uint8_t reason = static_cast<uint8_t>(content.at(4));
+        if (reason & 0x80) cout << "Error in PUBCOMP: " << std::hex << reason << endl;
 
-    uint8_t offset;
-    unsigned int size = readMqttVarInt(content, offset, 5);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        uint8_t offset;
+        unsigned int size = readMqttVarInt(content, offset, 5);
+        if (size > 0)
+        {
+            map<MqttPropertyType, string> properties = readProperties(content.substr(5 + offset, size));
+        }
+    }
 
     removeNonAcknowledgedData(identifier);
 }
@@ -763,7 +785,10 @@ void MqttClientV5::parseUnsubAck(const string & content) try
 
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset, 4);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
+    if (size > 0)
+    {
+        map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
+    }
 
     string flags = content.substr(4 + offset + size);
 
@@ -857,10 +882,10 @@ void MqttClientV5::transmitDisconnect() try
     string data;
 
     // add reason
-    data += m_willMessage != "" ? "\x04" : "\x00";
+    data += m_willMessage != "" ? '\x04' : static_cast<char>(int(0));
 
     // add zero properties (for now)
-    data += "\x00";
+    data += static_cast<char>(int(0));
 
     prepareFixedHeader(DISCONNECT, 0, data);
 
@@ -893,13 +918,17 @@ void MqttClientV5::transmitPublish(const string & topic, const string & content,
 
     // identifier is only present on qos larger 0
     uint16_t identifier = 0;
-    if (((flags & 0x03) >> 1) > 0)
+    
+    if (((flags & 0x06) >> 1) > 0)
     {
         identifier = this->generateIdentifier();
 
         data += static_cast<char>((identifier & 0xFF00) >> 8);
         data += static_cast<char>(identifier & 0x00FF);
     }
+
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
 
     data += content;
 
@@ -929,12 +958,11 @@ catch (exception & e)
 void MqttClientV5::transmitPubAck(const string & identifier, char reasonCode) try
 {
     string data = identifier;
+    
+    data += reasonCode;
 
-    if (m_protocolVersion == 5 && reasonCode != 0)
-    {
-        data += reasonCode;
-        data += '\x00';     // we do not wish to add properties for debugging
-    }
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
 
     prepareFixedHeader(PUBACK, 0, data);
 
@@ -960,12 +988,11 @@ catch (exception & e)
 void MqttClientV5::transmitPubRec(const string & identifier, char reasonCode) try
 {
     string data = identifier;
+    
+    data += reasonCode;
 
-    if (m_protocolVersion == 5 && reasonCode != 0)
-    {
-        data += reasonCode;
-        data += '\x00';     // we do not wish to add properties for debugging
-    }
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
 
     prepareFixedHeader(PUBREC, 0, data);
 
@@ -991,12 +1018,11 @@ catch (exception & e)
 void MqttClientV5::tranmitPubRel(const string & identifier, char reasonCode) try
 {
     string data = identifier;
+    
+    data += reasonCode;
 
-    if (m_protocolVersion == 5 && reasonCode != 0)
-    {
-        data += reasonCode;
-        data += '\x00';     // we do not wish to add properties for debugging
-    }
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
 
     prepareFixedHeader(PUBREL, 2, data);
 
@@ -1023,11 +1049,10 @@ void MqttClientV5::transmitPubComp(const string & identifier, char reasonCode) t
 {
     string data = identifier;
 
-    if (m_protocolVersion == 5 && reasonCode != 0)
-    {
-        data += reasonCode;
-        data += '\x00';     // we do not wish to add properties for debugging
-    }
+    data += reasonCode;
+
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
 
     prepareFixedHeader(PUBCOMP, 0, data);
 
@@ -1076,8 +1101,6 @@ void MqttClientV5::transmitSubscribe(const string & topic, uint8_t qos) try
 
     m_transportLayer->transmit(data);
 
-    cout << "Sent SUBSCRIBE: " << getBinStringAsAsciiHex(data) << endl;
-
     addNonAcknowledgedData(identifier, data);
 
     m_lastTimeOfSent = std::chrono::steady_clock::now();
@@ -1105,14 +1128,10 @@ void MqttClientV5::transmitUnsubscribe(const string & topic) try
     data += static_cast<char>((identifier & 0xFF00) >> 8);
     data += static_cast<char>(identifier & 0x00FF);
 
-    if (m_protocolVersion < 5)
-    {
-        data += makeMqttString(topic);
-    }
-    else if (m_protocolVersion == 5)
-    {
-        //TODO: create writeProperty to add content as such
-    }
+    // add zero properties (for now)
+    data += static_cast<char>(int(0));
+    
+    data += makeMqttString(topic);
 
     prepareFixedHeader(UNSUBSCRIBE, 2, data);
 

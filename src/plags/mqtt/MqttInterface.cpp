@@ -168,7 +168,6 @@ catch (exception & e)
  */
 unsigned int MqttInterface::readMqttVarInt(const string & data, uint8_t & offset, size_t pos) const try
 {
-    cout << "Reading " << getBinStringAsAsciiHex(data) << "  from position" << pos << endl;
     size_t initPos = pos;
     uint8_t byte;
     offset = 0;

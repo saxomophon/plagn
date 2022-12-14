@@ -560,7 +560,7 @@ void MqttClientV4::transmitPublish(const string & topic, const string & content,
 
     // identifier is only present on qos larger 0
     uint16_t identifier = 0;
-    if (((flags & 0x03) >> 1) > 0)
+    if (((flags & 0x06) >> 1) > 0)
     {
         identifier = generateIdentifier();
 
