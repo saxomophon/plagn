@@ -141,11 +141,20 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
     // working through translation table
     for (const pair<string, string> & mapEntry : m_translationMap)
     {
-        if (mapEntry.first == "sourcePlag"
+        try
+        {
+            if (mapEntry.first == "sourcePlag"
             || mapEntry.first == "targetPlag"
             || mapEntry.first == "gateCondition") continue;
-        translatedDatagram->setData(mapEntry.first,
-                                    sourceDatagram->getData(mapEntry.second));
+            translatedDatagram->setData(mapEntry.first,
+                                        sourceDatagram->getData(mapEntry.second));
+        }
+        catch (std::invalid_argument & e)
+        {
+            cout << "Invalid argument: " << e.what();
+            cout << "  -> Key \"" << mapEntry.second << "\" will be ignored!" << endl;
+            continue;
+        }
     }
 
     return translatedDatagram;
