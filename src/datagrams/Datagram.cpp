@@ -19,8 +19,14 @@
  *
  */
 
+// std includes
+#include <iostream>
+
 // openssl includes
 #include <openssl/evp.h>
+
+// boost includes
+#include <boost/algorithm/string.hpp>
 
 // own includes
 #include "Utilities.hpp"
@@ -92,6 +98,68 @@ DataType Datagram::getData(const string & key) const try
             return key;
         }
         return key.substr(1, key.size() - 2);
+    }
+    else if (key.find("SPLIT(") == 0)
+    {
+        size_t openBracketCount = 0;
+        size_t closingBracketPos = 0;
+        size_t argumentSeparatorPos = 0;
+        bool escaping = false;
+        bool inLiteral = false;
+        for (size_t i = 6; i < key.size(); i++)
+        {
+            if (key.at(i) == '\"' && inLiteral && !escaping)
+            {
+                inLiteral = false;
+            }
+            else if (key.at(i) == '\"' && !inLiteral && !escaping)
+            {
+                inLiteral = true;
+            }
+            else if (key.at(i) == '\\' && inLiteral)
+            {
+                escaping = true;
+            }
+            else if (key.at(i) == '(' && !inLiteral)
+            {
+                ++openBracketCount;
+            }
+            else if (key.at(i) == ')' && !inLiteral && openBracketCount > 0)
+            {
+                --openBracketCount;
+            }
+            else if (key.at(i) == ')' && !inLiteral)
+            {
+                closingBracketPos = i;
+                break;
+            }
+            else if (key.at(i) == ',' && !inLiteral && openBracketCount == 0)
+            {
+                argumentSeparatorPos = i;
+            }
+            else
+            {
+                escaping = false;
+            }
+        }
+        if (closingBracketPos == 0) throw std::invalid_argument("Need closing bracket in SPLIT");
+        if (argumentSeparatorPos == 0) throw std::invalid_argument("Need \",\" in SPLIT");
+        string innerKey = key.substr(6, argumentSeparatorPos - 6);
+        size_t splitterLength = closingBracketPos - argumentSeparatorPos - 1;
+        string splitter = key.substr(argumentSeparatorPos + 1, splitterLength);
+        DataType data = this->getData(innerKey);
+        vector<string> dataSplit;
+        boost::split(dataSplit, convertDataTypeToString(data), boost::is_any_of(splitter));
+        if (key.at(closingBracketPos + 1) == '.' && isDigit(key.at(closingBracketPos + 2)))
+        {
+            size_t index = stoul(key.substr(closingBracketPos + 2), nullptr, 10) - 1;
+            if (index == string::npos || index >= dataSplit.size())
+            {
+                throw std::invalid_argument("Index invalid. Hint: indices in config file start at 1");
+            }
+            return dataSplit.at(index);
+        }
+        return dataSplit;
     }
     else if (key == string("uuid"))
     {
