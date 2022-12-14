@@ -716,7 +716,11 @@ void MqttClientV5::parseSubAck(const string & content) try
 
     uint8_t offset;
     unsigned int size = readMqttVarInt(content, offset, 4);
-    map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
+
+    if (size > 0)
+    {
+        map<MqttPropertyType, string> properties = readProperties(content.substr(4 + offset, size));
+    }
 
     string flags = content.substr(4 + offset + size);
 
@@ -1056,14 +1060,23 @@ void MqttClientV5::transmitSubscribe(const string & topic, uint8_t qos) try
     data += static_cast<char>(identifier & 0x00FF);
 
     // add zero properties (for now)
-    data += "\x00";
+    data += static_cast<char>(int(0));
 
     data += makeMqttString(topic);
-    data += static_cast<char>(qos & 0x03);
+
+    uint8_t flags = 0;  // retain handling stays zero
+    flags |= (qos & 0x03);
+    flags |= 0x04;  // no local (do not send this messages it publish itself)
+    flags |= 0x08;  // retain as published (keeps retain info)
+    flags &= 0x3F;  // keep the reserved bits 0
+
+    data += static_cast<char>(flags);
 
     prepareFixedHeader(SUBSCRIBE, 2, data);
 
     m_transportLayer->transmit(data);
+
+    cout << "Sent SUBSCRIBE: " << getBinStringAsAsciiHex(data) << endl;
 
     addNonAcknowledgedData(identifier, data);
 
