@@ -1,11 +1,11 @@
 /**
  *-------------------------------------------------------------------------------------------------
- * @file DatagramMap.hpp
+ * @file DatagramHttpServer.hpp
  * @author Fabian Köslin (fabian@koeslin.info)
  * @contributors:
- * @brief Holds the DatagramMap class
+ * @brief Holds the DatagramHttpServer class
  * @version 0.1
- * @date 2022-12-14
+ * @date 2022-12-15
  * 
  * @copyright LGPL v2.1
  *
@@ -19,19 +19,24 @@
  *
  */
 
-#ifndef DATAGRAMMAP_HPP
-#define DATAGRAMMAP_HPP
+#ifndef DATAGRAMHTTPSERVER_HPP
+#define DATAGRAMHTTPSERVER_HPP
 
 // std includes
 
 // own includes
-#include "Datagram.hpp"
+#include "DatagramMap.hpp"
 
-class DatagramMap : public Datagram
+class DatagramHttpServer : public DatagramMap
 {
 public:
-    DatagramMap(const std::string & sourcePlag);
-    DatagramMap(const std::string & sourcePlag, std::map<std::string, DataType> map);
+    DatagramHttpServer(const std::string & sourcePlag);
+    DatagramHttpServer(const std::string & sourcePlag,
+                std::string reqId, std::map<std::string, DataType> map);
+
+    std::string getReqId();
+
+    void setReqId(std::string reqId);
 
     virtual DataType getData(const std::string & key) const;
 
@@ -39,10 +44,8 @@ public:
 
     virtual std::string toString() const;
 
-    const std::map<std::string, DataType> & getMap();
-
 private:
-    std::map<std::string, DataType> m_map; //!< map, holding the data of the datagram
+    std::string m_reqId;
 };
 
-#endif // DATAGRAMMAP_HPP
+#endif // DATAGRAMHTTPSERVER_HPP

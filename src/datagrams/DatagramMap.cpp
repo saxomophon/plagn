@@ -84,15 +84,20 @@ void DatagramMap::setData(const string & key, const DataType & value) try
     {
         // key is in map and can be override
         m_map[key] = value;
-    }
-    else // use base class implementation
+    } 
+    else // add the key to map
     {
-        Datagram::setData(key, value);
+        m_map.insert(pair<string, DataType>(key, value));
     }
 }
 catch (exception & e)
 {
-    throw std::runtime_error(string("DatagramUdp::setData(): ") + e.what());
+    throw std::runtime_error(string("DatagramMap::setData(): ") + e.what());
+}
+
+const std::map<std::string, DataType> & DatagramMap::getMap()
+{
+    return m_map;
 }
 
 /**

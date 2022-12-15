@@ -44,4 +44,10 @@ data = {}
 data["cmd"] = "sendInfo"
 data["info"] = "test message"
 sendDatagram(data)
---resvDatagram()
+retData = resvDatagram()
+print("------------------------")
+print("PlagData:")
+for key,val in pairs(retData) do
+    print(key .. ": " .. val)
+end 
+print("------------------------")

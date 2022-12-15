@@ -39,7 +39,7 @@
 
 // own includes
 #include "Plag.hpp"
-#include "DatagramMap.hpp"
+#include "DatagramHttpServer.hpp"
 
 // forward declaration
 class PlagHttpServer;
@@ -64,8 +64,9 @@ public:
 
 private:
     boost::asio::ip::tcp::socket m_sock; //!< tcp socket for this connection
-    PlagHttpServer * m_ptrParentPlagHttpServer;
-    
+    PlagHttpServer * m_ptrParentPlagHttpServer; //!< ptr to the parent Plag
+    std::vector<std::string> m_reqIds; //!< vector holding the requests for this connection
+
     std::string getRawRequest(); //!< function for getting the raw request from sock
 
     int sendDatagramInterface(lua_State * L); //!< function for sending a dgram from lua
@@ -119,6 +120,7 @@ public:
         std::string workingDirectory;
         std::string scriptFile;
         httpMethod method;
+        std::shared_ptr<DatagramHttpServer> stateDgram;
 
     } endpoint;
 
@@ -195,9 +197,8 @@ public:
 
 protected:
     // interface for the Lua scripts to use datagrams
-    void sendDatagram(std::shared_ptr<DatagramMap> dgram); // TODO: the new defined datagram has to be put here
-    std::shared_ptr<DatagramMap> resvDatagram(void); // TODO: the new defined datagram has to be put here
-
+    int sendDatagram(std::shared_ptr<DatagramHttpServer> dgram);
+    std::shared_ptr<DatagramHttpServer> resvDatagram(const std::vector<std::string> & reqIds);
 
 private:
     // config parameters

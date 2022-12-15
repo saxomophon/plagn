@@ -24,6 +24,8 @@
 
 // own include
 #include "DatagramUdp.hpp"
+#include "DatagramMap.hpp"
+#include "DatagramHttpServer.hpp"
 
 // self include
 #include "Kable.hpp"
@@ -42,7 +44,8 @@ Kable::Kable(const boost::property_tree::ptree & propTree, const string & rootNa
              std::shared_ptr<PlagInterface> parent, std::shared_ptr<PlagInterface> target) :
     PropertyTreeReader(propTree, rootName),
     m_parent(parent),
-    m_target(target)
+    m_target(target),
+    m_targetType(target->getType())
 {
     readConfig();
 }
@@ -130,6 +133,9 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
     {
     case PlagType::UDP:
         translatedDatagram = shared_ptr<DatagramUdp>(new DatagramUdp(sourcePlag));
+        break;
+    case PlagType::HttpServer:
+        translatedDatagram = shared_ptr<DatagramHttpServer>(new DatagramHttpServer(sourcePlag));
         break;
     case PlagType::none:
         //deliberate fall-through
