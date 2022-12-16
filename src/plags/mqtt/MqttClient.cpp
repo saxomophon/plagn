@@ -24,6 +24,7 @@
 
 // own includes
 #include "TcpClient.hpp"
+#include "TlsClient.hpp"
 
 // self include
 #include "MqttClient.hpp"
@@ -37,6 +38,7 @@ using namespace std;
  * @param parent reference to parent Plag
  * @param brokerIP ip of the broker as a string
  * @param brokerPort port of the broker to use
+ * @param certFile path to certificate file for ssl connection
  * @param clientId this' id as presented to the broker
  * @param defaultQoS a default QoS level
  * @param userName username to supply to broker
@@ -49,12 +51,14 @@ using namespace std;
  * @param version MQTT version of the client implementation
  */
 MqttClient::MqttClient(const Plag & parent, const string & brokerIP, unsigned int brokerPort,
-                           const string & clientId, uint8_t defaultQoS, const string & userName,
-                           const string & userPass, unsigned int keepAliveInterval,
-                           bool cleanSessions, const string & willTopic, const string willMessage,
-                           const vector<std::pair<string, uint8_t>> & defaultSubscriptions,
-                           uint8_t version) :
+                       const string & certFile, const string & clientId, uint8_t defaultQoS,
+                       const string & userName, const string & userPass,
+                       unsigned int keepAliveInterval, bool cleanSessions,
+                       const string & willTopic, const string willMessage,
+                       const vector<std::pair<string, uint8_t>> & defaultSubscriptions,
+                       uint8_t version):
     MqttInterface(parent, brokerIP, brokerPort),
+    m_certFile(certFile),
     m_clientId(clientId),
     m_qualityOfService(defaultQoS),
     m_userName(userName),
@@ -75,9 +79,16 @@ MqttClient::MqttClient(const Plag & parent, const string & brokerIP, unsigned in
  */
 void MqttClient::init() try
 {
-    
-    m_transportLayer.reset(new TcpClient(std::chrono::milliseconds(1000),
-                                         m_parent, m_brokerIP, m_brokerPort));
+    if (startsWith('8', to_string(m_brokerPort)) || m_certFile != "")
+    {
+        m_transportLayer.reset(new TlsClient(std::chrono::milliseconds(1000),
+                                             m_parent, m_brokerIP, m_brokerPort, m_certFile));
+    }
+    else
+    {
+        m_transportLayer.reset(new TcpClient(std::chrono::milliseconds(1000),
+                                             m_parent, m_brokerIP, m_brokerPort));
+    }
     connect();
 }
 catch (exception & e)

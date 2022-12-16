@@ -57,6 +57,7 @@ private:
     std::string m_brokerIP;             //!< ip the endpoint should bind to
     uint16_t m_port;                    //!< port the endpoint should bind to    
     uint16_t m_timeTimeout;             //!< time limit for communcation with device in ms
+    std::string m_certFile;             //!< file to certificate for ssl connection
     std::string m_userName;             //!< the client username provided to the Broker
     std::string m_userPass;             //!< password associated with m_userName
     std::string m_authenticationType;   //!< method to use for authentication

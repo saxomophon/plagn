@@ -76,8 +76,9 @@ class MqttClientV5 : public MqttClient
 {
 public:
     MqttClientV5(const Plag & parent, const std::string & brokerIP, unsigned int brokerPort,
-                 const std::string & clientId, uint8_t defaultQoS, const std::string & userName,
-                 const std::string & userPass, unsigned int keepAliveInterval, bool cleanSessions,
+                 const std::string & certFile, const std::string & clientId, uint8_t defaultQoS,
+                 const std::string & userName, const std::string & userPass,
+                 unsigned int keepAliveInterval, bool cleanSessions,
                  const std::string & willTopic, const std::string willMessage,
                  const std::vector<std::pair<std::string, uint8_t>> & defaultSubscriptions);
 

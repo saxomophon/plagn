@@ -30,11 +30,12 @@ class MqttClient : public MqttInterface
 {
 public:
     MqttClient(const Plag & parent, const std::string & brokerIP, unsigned int brokerPort,
-                 const std::string & clientId, uint8_t defaultQoS, const std::string & userName,
-                 const std::string & userPass, unsigned int keepAliveInterval, bool cleanSessions,
-                 const std::string & willTopic, const std::string willMessage,
-                 const std::vector<std::pair<std::string, uint8_t>> & defaultSubscriptions,
-                 uint8_t version = 4);
+               const std::string & certFile, const std::string & clientId, uint8_t defaultQoS,
+               const std::string & userName, const std::string & userPass,
+               unsigned int keepAliveInterval, bool cleanSessions,
+               const std::string & willTopic, const std::string willMessage,
+               const std::vector<std::pair<std::string, uint8_t>> & defaultSubscriptions,
+               uint8_t version = 4);
 
     virtual void init();
     virtual void poll();
@@ -56,6 +57,7 @@ protected:
 protected:
     std::string m_clientId;             //!< this' id at the MQTT broker
     uint8_t m_qualityOfService;         //!< default quality of service flag for MQTT
+    std::string m_certFile;             //!< file to certificate for ssl connection
     std::string m_userName;             //!< the client username provided to the Broker
     std::string m_userPass;             //!< password associated with m_userName
     unsigned int m_keepAliveInterval;   //!< keepaliveinterval in ms

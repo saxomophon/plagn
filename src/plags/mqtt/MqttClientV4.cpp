@@ -49,11 +49,12 @@ using namespace std;
  * @sa MqttClient::MqttClient()  
  */
 MqttClientV4::MqttClientV4(const Plag & parent, const string & brokerIP, unsigned int brokerPort,
-                           const string & clientId, uint8_t defaultQoS, const string & userName,
-                           const string & userPass, unsigned int keepAliveInterval,
-                           bool cleanSessions, const string & willTopic, const string willMessage,
-                           const vector<std::pair<string, uint8_t>> & defaultSubscriptions) :
-    MqttClient(parent, brokerIP, brokerPort, clientId, defaultQoS, userName, userPass,
+                           const string & certFile, const string & clientId, uint8_t defaultQoS,
+                           const string & userName, const string & userPass,
+                           unsigned int keepAliveInterval, bool cleanSessions,
+                           const string & willTopic, const string willMessage,
+                           const vector<std::pair<string, uint8_t>> & defaultSubscriptions):
+    MqttClient(parent, brokerIP, brokerPort, certFile, clientId, defaultQoS, userName, userPass,
                keepAliveInterval, cleanSessions, willTopic, willMessage, defaultSubscriptions, 4)
 {
 }

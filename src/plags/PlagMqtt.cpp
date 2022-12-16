@@ -86,6 +86,7 @@ void PlagMqtt::readConfig() try
     m_port = getOptionalParameter<uint16_t>("port", 1883);
 
     m_keepAliveInterval = getOptionalParameter<unsigned int>("keepAliveInterval", 300);
+    m_certFile = getOptionalParameter<string>("certFile", string(""));
 
     m_userName = getOptionalParameter<string>("userName", string("plagn"));
     m_userPass = getOptionalParameter<string>("userPass", string("plagn"));
@@ -127,8 +128,8 @@ void PlagMqtt::init() try
     if (m_mqttVersion <= 4)
     {
         string emptyString = "";
-        m_interface = shared_ptr<MqttClientV4>(new MqttClientV4(*this, m_brokerIP, m_port, "plagn",
-                                                                0, m_userName, m_userPass,
+        m_interface = shared_ptr<MqttClientV4>(new MqttClientV4(*this, m_brokerIP, m_port, m_certFile,
+                                                                "plagn", 0, m_userName, m_userPass,
                                                                 m_keepAliveInterval, m_cleanSessions,
                                                                 emptyString, emptyString,
                                                                 m_defaultSubscriptions));
@@ -137,8 +138,8 @@ void PlagMqtt::init() try
     {
 
         string emptyString = "";
-        m_interface = shared_ptr<MqttClientV5>(new MqttClientV5(*this, m_brokerIP, m_port, "plagn",
-                                                                0, m_userName, m_userPass,
+        m_interface = shared_ptr<MqttClientV5>(new MqttClientV5(*this, m_brokerIP, m_port, m_certFile,
+                                                                "plagn", 0, m_userName, m_userPass,
                                                                 m_keepAliveInterval, m_cleanSessions,
                                                                 emptyString, emptyString,
                                                                 m_defaultSubscriptions));
