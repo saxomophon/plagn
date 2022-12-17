@@ -88,7 +88,9 @@ int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
     }
     shared_ptr<DatagramHttpServer> dataToSend(
             new DatagramHttpServer(m_ptrParentPlagHttpServer->getName(), "", dgramMap));
+
     m_reqIds.push_back(to_string(m_ptrParentPlagHttpServer->sendDatagram(dataToSend)));
+
     return 0;
 }
 
@@ -456,14 +458,65 @@ void PlagHttpServer::readConfig() try
 {
     m_port = getParameter<uint16_t>("port");
 
-    // TODO: Read the endpoints! 
-    // using a default one for now
-    endpoint defaultEndpoint;
-    defaultEndpoint.endpoint = "/*";
-    defaultEndpoint.method = HTTP_GET;
-    defaultEndpoint.scriptFile = "./endpoint.lua";
-    defaultEndpoint.workingDirectory = "./";
-    m_endpoints.push_back(defaultEndpoint);
+    size_t idx = 1;
+
+    
+    while (getOptionalParameter<string>("endpoint[" + to_string(idx) + "].endpoint", "") != "" &&
+           getOptionalParameter<string>("endpoint[" + to_string(idx) + "].method", "") != "" &&
+           getOptionalParameter<string>("endpoint[" + to_string(idx) + "].scriptFile", "") != "")
+    {
+
+        endpoint tmp;
+        tmp.endpoint = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].endpoint", "");
+        string strMethod = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].method", "");
+        strMethod = to_upper_copy(strMethod);
+
+        if (strMethod == "POST")
+        {
+            tmp.method = HTTP_POST;
+        }
+        else if (strMethod == "PUT")
+        {
+            tmp.method = HTTP_PUT;
+        }
+        else if (strMethod == "GET")
+        {
+            tmp.method = HTTP_GET;
+        }
+        else if (strMethod == "DELETE")
+        {
+            tmp.method = HTTP_DELETE;
+        }
+        else if (strMethod == "HEAD")
+        {
+            tmp.method = HTTP_HEAD;
+        }
+        else if (strMethod == "CONNECT")
+        {
+            tmp.method = HTTP_CONNECT;
+        }
+        else if (strMethod == "OPTIONS")
+        {
+            tmp.method = HTTP_OPTIONS;
+        }
+        else if (strMethod == "TRACE")
+        {
+            tmp.method = HTTP_TRACE;
+        }
+        else if (strMethod == "PATCH")
+        {
+            tmp.method = HTTP_PATCH;
+        }
+        else 
+        {
+            tmp.method = HTTP_UNKNOWN;
+        }
+
+        tmp.scriptFile = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].scriptFile", "");
+        tmp.workingDirectory = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].workingDirectory", "./");
+        m_endpoints.push_back(tmp);
+        idx++;
+    }
 }
 catch (exception & e)
 {
@@ -480,7 +533,10 @@ catch (exception & e)
  */
 void PlagHttpServer::init() try
 {
-    m_tcpServer = boost::shared_ptr<PlagHttpServerTcpServer>(new PlagHttpServerTcpServer(m_ioContext, m_port, this));
+    m_tcpServer = shared_ptr<PlagHttpServerTcpServer>(new PlagHttpServerTcpServer(m_ioContext, m_port, this));
+    m_ioContextThread = shared_ptr<thread>(new thread([=]() {
+        this->m_ioContext.run();
+    }));
 }
 catch (exception & e)
 {
@@ -497,7 +553,7 @@ catch (exception & e)
  */
 bool PlagHttpServer::loopWork() try
 {
-    m_ioContext.run_one();
+    // we do not need to do any work here :-)
     return true;
 }
 catch (exception & e)
@@ -576,10 +632,12 @@ PlagHttpServer::httpMethod PlagHttpServerHttpData::getMethod()
 
 int PlagHttpServer::sendDatagram(std::shared_ptr<DatagramHttpServer> dgram)
 {
-    static int reqId = 0;
+    const lock_guard<mutex> lock(m_mtxSending);
     
-    cout << "send dgram: " << dgram->toString() << endl;
+    static int reqId = 0;
+
     dgram->setReqId(to_string(reqId));
+    
     appendToDistribution(dgram);
 
     return reqId++;
@@ -587,16 +645,7 @@ int PlagHttpServer::sendDatagram(std::shared_ptr<DatagramHttpServer> dgram)
 
 std::shared_ptr<DatagramHttpServer> PlagHttpServer::resvDatagram(const vector<string> & reqIds)
 {
-    for (auto endpoint : m_endpoints)
-    {
-        for (auto reqId : reqIds)
-        {
-            if (endpoint.endpoint == reqId)
-            {
-                return endpoint.stateDgram;
-            }
-        }
-    }
+    const lock_guard<mutex> lock(m_mtxRecv);
 
     for (auto dgramIt = m_incommingDatagrams.begin();
                 dgramIt != m_incommingDatagrams.end(); dgramIt++)
@@ -611,6 +660,18 @@ std::shared_ptr<DatagramHttpServer> PlagHttpServer::resvDatagram(const vector<st
             }
         }
     }
+
+    for (auto endpoint : m_endpoints)
+    {
+        for (auto reqId : reqIds)
+        {
+            if (endpoint.endpoint == reqId)
+            {
+                return endpoint.stateDgram;
+            }
+        }
+    }
+    
     return nullptr;
 }
 

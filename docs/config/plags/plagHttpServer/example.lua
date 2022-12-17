@@ -44,6 +44,7 @@ data = {}
 data["cmd"] = "sendInfo"
 data["info"] = "test message"
 sendDatagram(data)
+
 retData = resvDatagram()
 print("------------------------")
 print("PlagData:")

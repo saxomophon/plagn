@@ -95,7 +95,9 @@ public:
     template <class T>
     T getOptionalParameter(const std::string & key, const T & defaultValue) try
     {
-        boost::optional<T> tmp = m_propertyTree.get_optional<T>(m_rootName + "|" + key, '|');
+        // ATTENTION! USING NAMESPACE BOOST::PROPERTY_TREE FOR BREVITY
+        using namespace boost::property_tree;
+        boost::optional<T> tmp = m_propertyTree.get_optional<T>(ptree::path_type(m_rootName + "|" + key, '|'));
         return (tmp.is_initialized()) ? tmp.value() : defaultValue;
     }
     catch (std::exception & e)
@@ -121,7 +123,7 @@ public:
     {
         // ATTENTION! USING NAMESPACE BOOST::PROPERTY_TREE FOR BREVITY
         using namespace boost::property_tree;
-        boost::optional<T> tmp = propTree.get_optional<T>(rootName + "|" + key, '|');
+        boost::optional<T> tmp = propTree.get_optional<T>(ptree::path_type(rootName + "|" + key, '|'));
         return (tmp.is_initialized()) ? tmp.value() : defaultValue;
     }
     catch (std::exception & e)

@@ -205,7 +205,10 @@ private:
     uint16_t m_port;    //!< port the endpoint should bind to
     std::list<endpoint> m_endpoints; //!< list of the configured endpoints
     boost::asio::io_context m_ioContext; //!< io_context for the server
-    boost::shared_ptr<PlagHttpServerTcpServer> m_tcpServer; //!< pointer that holds the TCP Server
+    std::shared_ptr<PlagHttpServerTcpServer> m_tcpServer; //!< pointer that holds the TCP Server
+    std::shared_ptr<std::thread> m_ioContextThread; //!< thread for running the io context
+    std::mutex m_mtxSending; //!< mutex lock for the sending function
+    std::mutex m_mtxRecv; //!< mutex lock for resv function 
 
     // we need the class PlagHttpServerConnection have access to private 
     // members of this class. So make it friend
