@@ -28,24 +28,51 @@ using namespace std;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-AsyncTcpConnectionInterfaces::AsyncTcpConnectionInterfaces(boost::asio::io_context & ioContext,
+
+/**
+*-------------------------------------------------------------------------------------------------
+* @brief Construct a new  AsyncTcpConnectionInterfaces object sets up member values
+*
+* @param ioContext the boost::io_context
+* @param ptrParentPlag ptr to the parent plag
+*/
+AsyncTcpConnectionInterface::AsyncTcpConnectionInterface(boost::asio::io_context & ioContext,
     Plag * ptrParentPlag)
     : m_sock(ioContext),
     m_ptrParentPlag(ptrParentPlag)
 {
 }
 
-tcp::socket & AsyncTcpConnectionInterfaces::socket()
+/**
+*-------------------------------------------------------------------------------------------------
+* @brief return the boost::socket of the obj
+*
+*/
+tcp::socket & AsyncTcpConnectionInterface::socket()
 {
     return m_sock;
 }
 
-size_t AsyncTcpConnectionInterfaces::writeSome(std::string payload)
+/**
+*-------------------------------------------------------------------------------------------------
+* @brief writes some bytes to the socket
+*
+* @param payload payload to be sent
+* @returns number of bytes transfered
+*/
+size_t AsyncTcpConnectionInterface::writeSome(std::string payload)
 {
     return m_sock.write_some(boost::asio::buffer(payload));
 }
 
-string AsyncTcpConnectionInterfaces::readSome(int chunks = 1024)
+/**
+*-------------------------------------------------------------------------------------------------
+* @brief reads some bytes from the socket
+*
+* @param chucks size if the read buffer
+* @returns read bytes 
+*/
+string AsyncTcpConnectionInterface::readSome(int chunks)
 {
     char * buf = new char[chunks];
     size_t len = m_sock.read_some(boost::asio::buffer(buf, chunks));
@@ -55,7 +82,12 @@ string AsyncTcpConnectionInterfaces::readSome(int chunks = 1024)
     return retVal;
 }
 
-void AsyncTcpConnectionInterfaces::closeSock()
+/**
+*-------------------------------------------------------------------------------------------------
+* @brief close the socket
+*
+*/
+void AsyncTcpConnectionInterface::closeSock()
 {
     m_sock.close();
 }

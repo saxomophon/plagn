@@ -33,14 +33,14 @@
 
 /**
  *-------------------------------------------------------------------------------------------------
- * @brief The AsyncHttpConnectionInterfaces class Handles one connection to a client async
+ * @brief The AsyncTcpConnectionInterface class Handles one connection to a client async
  *
  */
-class AsyncTcpConnectionInterfaces:
-    public boost::enable_shared_from_this<AsyncTcpConnectionInterfaces>
+class AsyncTcpConnectionInterface:
+    public boost::enable_shared_from_this<AsyncTcpConnectionInterface>
 {
 public:
-    AsyncTcpConnectionInterfaces(boost::asio::io_context & ioContext, Plag * ptrParentPlag);
+    AsyncTcpConnectionInterface(boost::asio::io_context & ioContext, Plag * ptrParentPlag);
 
     boost::asio::ip::tcp::socket & socket();
 
@@ -62,7 +62,7 @@ private:
  *
  */
 template<class T>
-class AsncTcpServer
+class AsyncTcpServer
 {
 public:
     /**
@@ -73,17 +73,17 @@ public:
     * @param port port number of the server
     * @param ptrParentPlag ptr to the parent plag
     */
-    AsncTcpServer(boost::asio::io_context & ioContext, uint16_t port, Plag * ptrParentPlag)
-        : m_acceptor(ioContext, tcp::endpoint(tcp::v4(), port)),
+    AsyncTcpServer(boost::asio::io_context & ioContext, uint16_t port, Plag * ptrParentPlag)
+        : m_acceptor(ioContext, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
         m_ioContext(ioContext),
-        m_ptrParentPlagHttpServer(ptrParentPlag)
+        m_ptrParentPlag(ptrParentPlag)
     {
         startAccept();
     }
     
     /**
     *-------------------------------------------------------------------------------------------------
-    * @brief AsncTcpServer::handleAccept handles a new client connection
+    * @brief AsyncTcpServer::handleAccept handles a new client connection
     * @param connection ptr to the connection
     * @param err error code, if happend
     */
@@ -105,17 +105,17 @@ protected:
     void startAccept()
     {
         // socket
-        auto connection = std::shared_ptr<T>(new T(m_ioContext, m_parentPlag));
+        auto connection = std::shared_ptr<T>(new T(m_ioContext, m_ptrParentPlag));
 
         // asynchronous accept operation and wait for a new connection.
         m_acceptor.async_accept(connection->socket(),
-            boost::bind(&AsncTcpServer::handleAccept, this, connection,
+            boost::bind(&AsyncTcpServer::handleAccept, this, connection,
                 boost::asio::placeholders::error));
     }
     
     boost::asio::ip::tcp::acceptor m_acceptor; //!< acceptor for the incoming connections
     boost::asio::io_context & m_ioContext; //!< io_service for the server
-    Plag * m_parentPlag; //!< ptr to the parent plug of this server
+    Plag * m_ptrParentPlag; //!< ptr to the parent plug of this server
 };
 
 #endif /*ASYNCTCPSERVER_HPP_*/
