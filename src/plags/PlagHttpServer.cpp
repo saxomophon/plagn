@@ -30,7 +30,7 @@
 // boost includes
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-#include <boost/algorithm/string_regex.hpp>
+#include <boost/algorithm/stri_regex.hpp>
 
 // self include
 #include "PlagHttpServer.hpp"

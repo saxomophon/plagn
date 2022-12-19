@@ -110,4 +110,19 @@ protected:
     std::string getRawRequest(); //!< function for getting the raw request from sock
 };
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief The AsyncHttpServer class declaration & implementation
+ *
+ */
+template <class T>
+class AsyncHttpServer: public AsyncTcpServer<T>
+{
+public:
+    AsyncHttpServer(boost::asio::io_context & ioContext, Plag * ptrParentPla, uint16_t port = 80)
+        AsyncTcpServer(ioContext, port, ptrParentPlag)
+    {
+    }
+};
+
 #endif /*ASYNCHTTPSERVER_HPP_*/
