@@ -40,6 +40,8 @@
 // own includes
 #include "Plag.hpp"
 #include "DatagramHttpServer.hpp"
+#include "AsyncHttpServer.hpp"
+#include "LuaWrapper.hpp"
 
 // forward declaration
 class PlagHttpServer;
@@ -49,47 +51,18 @@ class PlagHttpServer;
  * @brief The PlagHttpServerConnection class Handles one connection to a client async
  *
  */
-class PlagHttpServerConnection : public boost::enable_shared_from_this<PlagHttpServerConnection>
+class PlagHttpServerConnection : public AsyncHttpConnectionInterface
 {
 public:
-    PlagHttpServerConnection(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer);
+    PlagHttpServerConnection(boost::asio::io_context & ioContext, Plag * ptrParentPlag);
+
+    HttpResponse workingRequest(HttpRequest req);
     
-    typedef boost::shared_ptr<PlagHttpServerConnection> pointer;
-    
-    static pointer create(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer);
-
-    boost::asio::ip::tcp::socket & socket();
-
-    void start();
-
 private:
-    boost::asio::ip::tcp::socket m_sock; //!< tcp socket for this connection
-    PlagHttpServer * m_ptrParentPlagHttpServer; //!< ptr to the parent Plag
-    std::vector<std::string> m_reqIds; //!< vector holding the requests for this connection
-
-    std::string getRawRequest(); //!< function for getting the raw request from sock
-
     int sendDatagramInterface(lua_State * L); //!< function for sending a dgram from lua
     int resvDatagramInterface(lua_State * L); //!< function for resv a dgram to lua 
 };
 
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief The PlagHTTPServerTcpServer class Handles the connections from a client async
- *
- */
-class PlagHttpServerTcpServer
-{
-public:
-    PlagHttpServerTcpServer(boost::asio::io_context & s, uint16_t port, PlagHttpServer * ptrParentPlagHttpServer);
-    void handleAccept(PlagHttpServerConnection::pointer connection, const boost::system::error_code & err);
-
-private:
-    void startAccept();
-    boost::asio::ip::tcp::acceptor m_acceptor; //!< acceptor for the incoming connections
-    boost::asio::io_context & m_ioContext; //!< io_service for the server
-    PlagHttpServer * m_ptrParentPlagHttpServer;
-};
 
 /**
  *-------------------------------------------------------------------------------------------------
@@ -98,90 +71,15 @@ private:
  */
 class PlagHttpServer : public Plag
 {
-public:
-    // some typedefs
-    typedef enum
-    {
-        HTTP_UNKNOWN = 0,
-        HTTP_GET = 1,
-        HTTP_POST = 2,
-        HTTP_PUT = 3,
-        HTTP_DELETE = 4,
-        HTTP_HEAD = 5,
-        HTTP_CONNECT = 6,
-        HTTP_OPTIONS = 7,
-        HTTP_TRACE = 8,
-        HTTP_PATCH = 9
-    } httpMethod;
-    
+public:    
     typedef struct
     {
-        std::string endpoint;
+        AsyncHttpServerUtils::endpoint_t endpointDef;
         std::string workingDirectory;
         std::string scriptFile;
-        httpMethod method;
         std::shared_ptr<DatagramHttpServer> stateDgram;
 
     } endpoint;
-
-    // http response code, type and statics
-    typedef struct
-    {
-        int code;
-        std::string message;
-    } responseStatusCode;
-
-    static const responseStatusCode HTTP_100; //!< 100 Continue
-    static const responseStatusCode HTTP_101; //!< 101 Switching Protocols
-    static const responseStatusCode HTTP_103; //!< 103 Early Hints
-    static const responseStatusCode HTTP_200; //!< 200 OK
-    static const responseStatusCode HTTP_201; //!< 201 Created
-    static const responseStatusCode HTTP_202; //!< 202 Accepted
-    static const responseStatusCode HTTP_203; //!< 203 Non - Authoritative Information
-    static const responseStatusCode HTTP_204; //!< 204 No Content
-    static const responseStatusCode HTTP_205; //!< 205 Reset Content
-    static const responseStatusCode HTTP_206; //!< 206 Partial Content
-    static const responseStatusCode HTTP_300; //!< 300 Multiple Choices
-    static const responseStatusCode HTTP_301; //!< 301 Moved Permanently
-    static const responseStatusCode HTTP_302; //!< 302 Found
-    static const responseStatusCode HTTP_303; //!< 303 See Other
-    static const responseStatusCode HTTP_304; //!< 304 Not Modified
-    static const responseStatusCode HTTP_307; //!< 307 Temporary Redirect
-    static const responseStatusCode HTTP_308; //!< 308 Permanent Redirect
-    static const responseStatusCode HTTP_400; //!< 400 Bad Request
-    static const responseStatusCode HTTP_401; //!< 401 Unauthorized
-    static const responseStatusCode HTTP_402; //!< 402 Payment Required
-    static const responseStatusCode HTTP_403; //!< 403 Forbidden
-    static const responseStatusCode HTTP_404; //!< 404 Not Found
-    static const responseStatusCode HTTP_405; //!< 405 Method Not Allowed
-    static const responseStatusCode HTTP_406; //!< 406 Not Acceptable
-    static const responseStatusCode HTTP_407; //!< 407 Proxy Authentication Required
-    static const responseStatusCode HTTP_408; //!< 408 Request Timeout
-    static const responseStatusCode HTTP_409; //!< 409 Conflict
-    static const responseStatusCode HTTP_410; //!< 410 Gone
-    static const responseStatusCode HTTP_411; //!< 411 Length Required
-    static const responseStatusCode HTTP_412; //!< 412 Precondition Failed
-    static const responseStatusCode HTTP_413; //!< 413 Payload Too Large
-    static const responseStatusCode HTTP_414; //!< 414 URI Too Long
-    static const responseStatusCode HTTP_415; //!< 415 Unsupported Media Type
-    static const responseStatusCode HTTP_416; //!< 416 Range Not Satisfiable
-    static const responseStatusCode HTTP_417; //!< 417 Expectation Failed
-    static const responseStatusCode HTTP_418; //!< 418 I'm a teapot
-    static const responseStatusCode HTTP_425; //!< 425 Too Early
-    static const responseStatusCode HTTP_426; //!< 426 Upgrade Required
-    static const responseStatusCode HTTP_428; //!< 428 Precondition Required
-    static const responseStatusCode HTTP_429; //!< 429 Too Many Requests
-    static const responseStatusCode HTTP_431; //!< 431 Request Header Fields Too Large
-    static const responseStatusCode HTTP_451; //!< 451 Unavailable For Legal Reasons
-    static const responseStatusCode HTTP_500; //!< 500 Internal Server Error
-    static const responseStatusCode HTTP_501; //!< 501 Not Implemented
-    static const responseStatusCode HTTP_502; //!< 502 Bad Gateway
-    static const responseStatusCode HTTP_503; //!< 503 Service Unavailable
-    static const responseStatusCode HTTP_504; //!< 504 Gateway Timeoutå
-    static const responseStatusCode HTTP_505; //!< 505 HTTP Version Not Supported
-    static const responseStatusCode HTTP_506; //!< 506 Variant Also Negotiates
-    static const responseStatusCode HTTP_510; //!< 510 Not Extended
-    static const responseStatusCode HTTP_511; //!< 511 Network Authentication Required
 
     PlagHttpServer(const boost::property_tree::ptree & propTree,
             const std::string & name, const uint64_t & id);
@@ -205,7 +103,7 @@ private:
     uint16_t m_port;    //!< port the endpoint should bind to
     std::list<endpoint> m_endpoints; //!< list of the configured endpoints
     boost::asio::io_context m_ioContext; //!< io_context for the server
-    std::shared_ptr<PlagHttpServerTcpServer> m_tcpServer; //!< pointer that holds the TCP Server
+    std::shared_ptr<AsyncHttpServer<PlagHttpServerConnection>> m_tcpServer; //!< pointer that holds the TCP Server
     std::shared_ptr<std::thread> m_ioContextThread; //!< thread for running the io context
     std::mutex m_mtxSending; //!< mutex lock for the sending function
     std::mutex m_mtxRecv; //!< mutex lock for resv function 
@@ -214,50 +112,4 @@ private:
     // members of this class. So make it friend
     friend class PlagHttpServerConnection;
 };
-
-class PlagHttpServerHttpData
-{
-public:
-    boost::optional<std::string> getHeader(std::string key);
-    std::map<std::string, std::string> getHeader();
-    std::string getContent();
-    std::string getHttpVersion();
-    std::string getEndpoint();
-    PlagHttpServer::httpMethod getMethod();
-    
-protected:
-    PlagHttpServer::httpMethod m_method;
-    std::string m_version;
-    std::map<std::string, std::string> m_header;
-    std::string m_content;
-    std::string m_endpoint;
-};
-
-class PlagHttpServerHttpRequest : public PlagHttpServerHttpData
-{
-public:
-    PlagHttpServerHttpRequest(std::string rawRequest);
-    boost::optional<std::string> getParam(std::string key);
-    std::map<std::string, std::string> getParams();
-
-    bool operator == (const PlagHttpServer::endpoint & endpoint);
-    
-private:
-    std::map<std::string, std::string> m_params;
-};
-
-class PlagHttpServerHttpResponse : public PlagHttpServerHttpData
-{
-public:
-    PlagHttpServerHttpResponse(PlagHttpServer::httpMethod method, std::string version, std::string endpoint);
-    void addHeader(std::string key, std::string value);
-    void setContent(std::string content);
-    void setStatus(PlagHttpServer::responseStatusCode status);
-    std::string encode();
-
-private:
-    PlagHttpServer::responseStatusCode m_status;
-};
-
-
-#endif // PLAGHTTPSERVER_HPP
+#endif /*PLAGHTTPSERVER_HPP*/

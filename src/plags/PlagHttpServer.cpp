@@ -30,7 +30,7 @@
 // boost includes
 #include <boost/algorithm/string.hpp>
 #include <boost/regex.hpp>
-#include <boost/algorithm/stri_regex.hpp>
+#include <boost/algorithm/string_regex.hpp>
 
 // self include
 #include "PlagHttpServer.hpp"
@@ -41,21 +41,9 @@ using namespace boost::algorithm;
 using ip::tcp;
 
 
-PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer)
-    : m_sock(ioContext),
-    m_ptrParentPlagHttpServer(ptrParentPlagHttpServer)
+PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioContext, Plag * ptrParentPlag)
+    : AsyncHttpConnectionInterface(ioContext, ptrParentPlag)
 {
-    
-}
-
-PlagHttpServerConnection::pointer PlagHttpServerConnection::create(boost::asio::io_context & ioContext, PlagHttpServer * ptrParentPlagHttpServer)
-{
-    return pointer(new PlagHttpServerConnection(ioContext, ptrParentPlagHttpServer));
-}
-
-tcp::socket & PlagHttpServerConnection::socket()
-{
-    return m_sock;
 }
 
 int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
@@ -166,10 +154,8 @@ int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
     return 1;
 }
 
-void PlagHttpServerConnection::start()
+HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
 {
-    PlagHttpServerHttpRequest req(getRawRequest());
-
     auto header = req.getHeader();
     auto params = req.getParams();
 
@@ -188,71 +174,55 @@ void PlagHttpServerConnection::start()
     }
     cout << "Content: " << req.getContent() << endl;
 
-    for (auto endpoint : m_ptrParentPlagHttpServer->m_endpoints)
+    auto castPtrParent = dynamic_cast<PlagHttpServer*>(m_ptrParentPlag);
+
+    for (auto endpoint : castPtrParent->m_endpoints)
     {
-        if (req == endpoint)
+        if (req == endpoint.endpointDef)
         {
             // add static reqId to list
-            m_reqIds.push_back(endpoint.endpoint);
+            m_reqIds.push_back(endpoint.endpointDef.endpoint);
 
             // Lua Magic
-            // open the lua library
-            lua_State * L = luaL_newstate();
-            luaL_openlibs(L);
+            LuaWrapper LuaWrapper;
 
             // create header table
-            lua_createtable(L, 0, 4);
-            for (auto headerPair : req.getHeader())
-            {
-                lua_pushstring(L, headerPair.first.c_str());
-                lua_pushstring(L, headerPair.second.c_str());
-                lua_settable(L, -3);
-            }
-            lua_setglobal(L, "reqHeader");
+            LuaWrapper.createTable("reqHeader", req.getHeader());
 
             // create params table
-            lua_createtable(L, 0, 4);
-            for (auto headerPair : req.getParams())
-            {
-                lua_pushstring(L, headerPair.first.c_str());
-                lua_pushstring(L, headerPair.second.c_str());
-                lua_settable(L, -3);
-            }
-            lua_setglobal(L, "reqParams");
+            luaWrapper.createTable("reqParams", req.getParams());
 
             // create global for content
-            lua_pushstring(L, req.getContent().c_str());
-            lua_setglobal(L, "reqContent");
+            luaWrapper.createString("reqContent", req.getContent());
 
             // create global for endpoint
-            lua_pushstring(L, req.getEndpoint().c_str());
-            lua_setglobal(L, "reqEndpoint");
+            luaWrapper.createString("reqEndpoint", req.getEndpoint());
 
             // create global for version
-            lua_pushstring(L, req.getHttpVersion().c_str());
-            lua_setglobal(L, "reqHttpVersion");
+            luaWrapper.createString("reqHttpVersion", req.getHttpVersion());
 
             // pushing the functions for dgram to lua
             // first store "this" in L's extra storage
-            *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L)) = this;
+            luaWrapper.addObjectPtr<PlagHttpServerConnection>(this);
+            
             // send dgram
-            lua_pushcfunction(L, [](lua_State * L) -> int { 
-                PlagHttpServerConnection * ptrThis = *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L));
+            luaWrapper.addObjectPtr<PlagHttpServerConnection>("sendDatagram", [](lua_State * L) -> int
+            {
+                PlagHttpServerConnection * ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
                 return ptrThis->sendDatagramInterface(L);
             });
-            lua_setglobal(L, "sendDatagram");
             // resv dgram
-            lua_pushcfunction(L, [](lua_State * L) -> int {
-                PlagHttpServerConnection * ptrThis = *static_cast<PlagHttpServerConnection **>(lua_getextraspace(L));
+            luaWrapper.addObjectPtr<PlagHttpServerConnection>("resvDatagram", [](lua_State * L) -> int
+            {
+                PlagHttpServerConnection * ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
                 return ptrThis->resvDatagramInterface(L);
             });
-            lua_setglobal(L, "resvDatagram");
 
             // running the script
-            if (luaL_dofile(L, "../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
+            if (luaWrapper.executeFile("../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
             {
                 cout << "[C] Executed example.lua\n";
-                PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+                HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
                 
                 lua_getglobal(L, "respHeader");
                 if (lua_istable(L, -1))
@@ -316,108 +286,6 @@ void PlagHttpServerConnection::start()
     }
 }
 
-string PlagHttpServerConnection::getRawRequest()
-{
-    string retValue = "";
-    bool nextRead = true;
-    size_t contentLength = 0;
-
-    do
-    {
-        const int bufSize = 1024;
-        char buf[bufSize];
-        memset(&buf[0], '\0', sizeof(buf));
-        size_t len = m_sock.read_some(boost::asio::buffer(buf));
-        
-        retValue += string(buf, len);
-
-        if (contains(to_lower_copy(retValue), "content-length: ") && contentLength == 0)
-        {
-            size_t pos = to_lower_copy(retValue).find("content-length: ");
-
-            if (pos != string::npos)
-            {
-                pos += sizeof("content-length: ");
-                auto posStart = pos - 1;
-                while (retValue[pos] != '\x0D' && pos < retValue.length())
-                {
-                    pos++;
-                }
-                
-                if (pos < retValue.length())
-                {
-                    contentLength = stoi(retValue.substr(posStart, pos - posStart));               
-                }
-            }
-        }
-
-        if (contains(retValue, "\x0D\x0A\x0D\x0A"))
-        {
-            size_t pos = retValue.find("\x0D\x0A\x0D\x0A");
-            pos += sizeof("\x0D\x0A\x0D\x0A") - 1;
-            
-            if (retValue.length() - pos == contentLength)
-            {
-                nextRead = false;
-            }
-            else if (retValue.length() - pos > contentLength)
-            {
-                retValue = retValue.substr(0, pos + contentLength);
-                nextRead = false;
-            }
-        }
-
-    } while (nextRead);
-
-    return retValue;
-}
-
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief Const a new PlagHttpServerTcpServer::PlagHttpServerTcpServer object assigns default values
- *
- */
-PlagHttpServerTcpServer::PlagHttpServerTcpServer(boost::asio::io_context & ioContext,
-    uint16_t port, PlagHttpServer * ptrParentPlagHttpServer)
-        : m_acceptor(ioContext, tcp::endpoint(tcp::v4(), port)),
-        m_ioContext(ioContext),
-        m_ptrParentPlagHttpServer(ptrParentPlagHttpServer)
-{
-    startAccept();
-}
-
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief PlagHttpServerTcpServer::startAccept accepts a new client connection
- *
- */
-void PlagHttpServerTcpServer::startAccept()
-{
- // socket
-    PlagHttpServerConnection::pointer connection =
-        PlagHttpServerConnection::create(m_ioContext, m_ptrParentPlagHttpServer);
-
-   // asynchronous accept operation and wait for a new connection.
-    m_acceptor.async_accept(connection->socket(),
-       boost::bind(&PlagHttpServerTcpServer::handleAccept, this, connection,
-           boost::asio::placeholders::error));
-}
-
-
-/**
- *-------------------------------------------------------------------------------------------------
- * @brief PlagHttpServerTcpServer::handleAccept handles a new client connection
- *
- */
-void PlagHttpServerTcpServer::handleAccept(PlagHttpServerConnection::pointer connection, const boost::system::error_code & err)
-{
-    if (!err)
-    {
-        connection->start();
-    }
-    startAccept();
-}
-
 /**
  *-------------------------------------------------------------------------------------------------
  * @brief Construct a new Plag HttpServer:: Plag HttpServer object assigns default values
@@ -467,49 +335,49 @@ void PlagHttpServer::readConfig() try
     {
 
         endpoint tmp;
-        tmp.endpoint = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].endpoint", "");
+        tmp.endpointDef.endpoint = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].endpoint", "");
         string strMethod = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].method", "");
         strMethod = to_upper_copy(strMethod);
 
         if (strMethod == "POST")
         {
-            tmp.method = HTTP_POST;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_POST;
         }
         else if (strMethod == "PUT")
         {
-            tmp.method = HTTP_PUT;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_PUT;
         }
         else if (strMethod == "GET")
         {
-            tmp.method = HTTP_GET;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_GET;
         }
         else if (strMethod == "DELETE")
         {
-            tmp.method = HTTP_DELETE;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_DELETE;
         }
         else if (strMethod == "HEAD")
         {
-            tmp.method = HTTP_HEAD;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_HEAD;
         }
         else if (strMethod == "CONNECT")
         {
-            tmp.method = HTTP_CONNECT;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_CONNECT;
         }
         else if (strMethod == "OPTIONS")
         {
-            tmp.method = HTTP_OPTIONS;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_OPTIONS;
         }
         else if (strMethod == "TRACE")
         {
-            tmp.method = HTTP_TRACE;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_TRACE;
         }
         else if (strMethod == "PATCH")
         {
-            tmp.method = HTTP_PATCH;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_PATCH;
         }
         else 
         {
-            tmp.method = HTTP_UNKNOWN;
+            tmp.endpointDef.method = AsyncHttpServerUtils::HTTP_UNKNOWN;
         }
 
         tmp.scriptFile = getOptionalParameter<string>("endpoint[" + to_string(idx) + "].scriptFile", "");
@@ -533,8 +401,8 @@ catch (exception & e)
  */
 void PlagHttpServer::init() try
 {
-    m_tcpServer = shared_ptr<PlagHttpServerTcpServer>(new PlagHttpServerTcpServer(m_ioContext, m_port, this));
-    m_ioContextThread = shared_ptr<thread>(new thread([=]() {
+    m_tcpServer = shared_ptr<AsyncHttpServer<PlagHttpServerConnection>>(new AsyncHttpServer<PlagHttpServerConnection>(m_ioContext, this, m_port));
+    m_ioContextThread = shared_ptr<thread>(new thread([this]() {
         this->m_ioContext.run();
     }));
 }
@@ -595,41 +463,6 @@ catch (exception & e)
     throw eEdited;
 }
 
-boost::optional<string> PlagHttpServerHttpData::getHeader(string key)
-{
-    if (m_header.count(key) == 1)
-    {
-        return m_header[key];
-    }
-
-    return boost::none;
-}
-
-map<string, string> PlagHttpServerHttpData::getHeader()
-{
-    return m_header;
-}
-
-std::string PlagHttpServerHttpData::getContent() 
-{
-    return m_content;
-}
-
-std::string PlagHttpServerHttpData::getHttpVersion()
-{
-    return m_version;
-}
-
-std::string PlagHttpServerHttpData::getEndpoint()
-{
-    return m_endpoint;
-}
-
-PlagHttpServer::httpMethod PlagHttpServerHttpData::getMethod()
-{
-    return m_method;
-}
-
 int PlagHttpServer::sendDatagram(std::shared_ptr<DatagramHttpServer> dgram)
 {
     const lock_guard<mutex> lock(m_mtxSending);
@@ -673,221 +506,4 @@ std::shared_ptr<DatagramHttpServer> PlagHttpServer::resvDatagram(const vector<st
     }
     
     return nullptr;
-}
-
-// Http Response Codes and Messages 
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_100 = { 100, "Continue" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_101 = { 101, "Switching Protocols" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_103 = { 103, "Early Hints" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_200 = { 200, "OK" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_201 = { 201, "Created" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_202 = { 202, "Accepted" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_203 = { 203, "Non - Authoritative Information" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_204 = { 204, "No Content" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_205 = { 205, "Reset Content" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_206 = { 206, "Partial Content" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_300 = { 300, "Multiple Choices" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_301 = { 301, "Moved Permanently" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_302 = { 302, "Found" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_303 = { 303, "See Other" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_304 = { 304, "Not Modified" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_307 = { 307, "Temporary Redirect" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_308 = { 308, "Permanent Redirect" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_400 = { 400, "Bad Request" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_401 = { 401, "Unauthorized" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_402 = { 402, "Payment Required" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_403 = { 403, "Forbidden" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_404 = { 404, "Not Found" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_405 = { 405, "Method Not Allowed" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_406 = { 406, "Not Acceptable" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_407 = { 407, "Proxy Authentication Required" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_408 = { 408, "Request Timeout" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_409 = { 409, "Conflict" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_410 = { 410, "Gone" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_411 = { 411, "Length Required" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_412 = { 412, "Precondition Failed" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_413 = { 413, "Payload Too Large" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_414 = { 414, "URI Too Long" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_415 = { 415, "Unsupported Media Type" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_416 = { 416, "Range Not Satisfiable" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_417 = { 417, "Expectation Failed" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_418 = { 418, "I'm a teapot" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_425 = { 425, "Too Early" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_426 = { 426, "Upgrade Required" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_428 = { 428, "Precondition Required" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_429 = { 429, "Too Many Requests" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_431 = { 431, "Request Header Fields Too Large" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_451 = { 451, "Unavailable For Legal Reasons" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_500 = { 500, "Internal Server Error" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_501 = { 501, "Not Implemented" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_502 = { 502, "Bad Gateway" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_503 = { 503, "Service Unavailable" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_504 = { 504, "Gateway Timeout" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_505 = { 505, "HTTP Version Not Supported" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_506 = { 506, "Variant Also Negotiates" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_510 = { 510, "Not Extended" };
-const PlagHttpServer::responseStatusCode PlagHttpServer::HTTP_511 = { 511, "Network Authentication Required" };
-
-PlagHttpServerHttpRequest::PlagHttpServerHttpRequest(std::string rawRequest)
-{
-    // parsing the rawRequest
-    // get the content and the header;
-    vector<string> headerAndContent;
-    split_regex(headerAndContent, rawRequest, boost::regex("\x0D\x0A\x0D\x0A"));
-
-    if (headerAndContent.size() >= 2)
-    {
-        m_content = headerAndContent[1];
-    } 
-    else
-    {
-        m_content = "";
-    }
-
-    vector<string> header;
-    split_regex(header, headerAndContent[0], boost::regex("\x0D\x0A"));
-
-    vector<string> firstRow;
-    split(firstRow, header[0], is_any_of(" "));
-
-    // parsing the http method
-    if (to_upper_copy(firstRow[0]) == "GET")
-    {
-        m_method = PlagHttpServer::HTTP_GET;
-    }
-    else if (to_upper_copy(firstRow[0]) == "POST")
-    {
-        m_method = PlagHttpServer::HTTP_POST;
-    }
-    else if (to_upper_copy(firstRow[0]) == "PUT")
-    {
-        m_method = PlagHttpServer::HTTP_PUT;
-    }
-    else if (to_upper_copy(firstRow[0]) == "DELETE")
-    {
-        m_method = PlagHttpServer::HTTP_DELETE;
-    }
-    else if (to_upper_copy(firstRow[0]) == "TRACE")
-    {
-        m_method = PlagHttpServer::HTTP_TRACE;
-    }
-    else if (to_upper_copy(firstRow[0]) == "HEAD")
-    {
-        m_method = PlagHttpServer::HTTP_HEAD;
-    }
-    else if (to_upper_copy(firstRow[0]) == "CONNECT")
-    {
-        m_method = PlagHttpServer::HTTP_CONNECT;
-    }
-    else if (to_upper_copy(firstRow[0]) == "OPTIONS")
-    {
-        m_method = PlagHttpServer::HTTP_OPTIONS;
-    }
-    else if (to_upper_copy(firstRow[0]) == "PATCH")
-    {
-        m_method = PlagHttpServer::HTTP_PATCH;
-    }
-    else
-    {
-        m_method = PlagHttpServer::HTTP_UNKNOWN;
-    }
-
-    vector<string> urlParams;
-    split(urlParams, firstRow[1], is_any_of("?"));
-    m_endpoint = urlParams[0];
-
-    if (urlParams.size() > 1)
-    {
-        vector<string> params;
-        split(params, urlParams[1], is_any_of("&"));
-        for (auto param : params)
-        {
-            vector<string> paramPair;
-            split(paramPair, param, is_any_of("="));
-            m_params.insert(pair<string, string>(paramPair[0], paramPair[1]));
-        }
-    }
-
-    m_version = firstRow[2];
-
-    // following header:
-    for (int i = 1; i < header.size(); i++)
-    {
-        vector<string> headerPair;
-        split_regex(headerPair, header[i], boost::regex(": "));
-        m_header.insert(pair<string, string>(headerPair[0], headerPair[1]));
-    }
-}
-
-boost::optional<std::string> PlagHttpServerHttpRequest::getParam(std::string key)
-{
-    if (m_params.count(key) == 1)
-    {
-        return m_params[key];
-    }
-
-    return boost::none;
-}
-
-std::map<std::string, std::string> PlagHttpServerHttpRequest::getParams()
-{
-    return m_params;
-}
-
-bool PlagHttpServerHttpRequest::operator == (const PlagHttpServer::endpoint & endpoint)
-{
-    // check the HTTP_METHOD
-    if (m_method != endpoint.method)
-        return false;
-
-    // check Http Endpoint
-    if (contains(endpoint.endpoint, "*"))
-    {
-        auto pos = endpoint.endpoint.find('*');
-        return endpoint.endpoint.substr(0, pos) == m_endpoint.substr(0, pos);
-    }
-    else
-    {
-        return endpoint.endpoint == m_endpoint;
-    }
-
-    return false;
-}
-
-PlagHttpServerHttpResponse::PlagHttpServerHttpResponse(PlagHttpServer::httpMethod method, string version, string endpoint)
-{
-    m_method = method;
-    m_version = version;
-    m_endpoint = endpoint;
-
-    addHeader("Server", "Plagn/0.0.1");
-}
-
-void PlagHttpServerHttpResponse::addHeader(string key, string value)
-{
-    m_header.insert(pair<string, string>(key, value));
-}
-
-void PlagHttpServerHttpResponse::setContent(string content)
-{
-    m_content = content;
-}
-
-void PlagHttpServerHttpResponse::setStatus(PlagHttpServer::responseStatusCode status)
-{
-    m_status = status;
-}
-
-string PlagHttpServerHttpResponse::encode() 
-{
-    string encoded = m_version + " " + to_string(m_status.code) + " " + m_status.message + "\x0D\x0A";
-    for (auto headerPair : m_header)
-    {
-        encoded += headerPair.first + ": " + headerPair.second + "\x0D\x0A";
-    }
-    encoded += "Content-Length: " + to_string(m_content.length()) + "\x0D\x0A";
-    encoded += "\x0D\x0A";
-    encoded += m_content;
-
-    return encoded;
 }

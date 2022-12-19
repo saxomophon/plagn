@@ -119,8 +119,8 @@ template <class T>
 class AsyncHttpServer: public AsyncTcpServer<T>
 {
 public:
-    AsyncHttpServer(boost::asio::io_context & ioContext, Plag * ptrParentPla, uint16_t port = 80)
-        AsyncTcpServer(ioContext, port, ptrParentPlag)
+    AsyncHttpServer(boost::asio::io_context & ioContext, Plag * ptrParentPlag, uint16_t port = 80):
+        AsyncTcpServer<T>(ioContext, port, ptrParentPlag)
     {
     }
 };

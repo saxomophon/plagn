@@ -50,10 +50,10 @@ protected:
     size_t writeSome(std::string payload);
     std::string readSome(int chunks = 1024);
     void closeSock();
-    
+    Plag * m_ptrParentPlag; //!< ptr to the parent Plag
+
 private:
     boost::asio::ip::tcp::socket m_sock; //!< tcp socket for this connection
-    Plag * m_ptrParentPlag; //!< ptr to the parent Plag
 };
 
 /**
