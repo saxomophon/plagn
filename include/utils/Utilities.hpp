@@ -27,6 +27,9 @@
 #include <string>
 #include <variant>
 #include <vector>
+#include <memory>
+#include <climits>
+#include <ctime>
 
 namespace plagn
 {

@@ -20,6 +20,9 @@
             },
             "linux": {
                 "program": "${workspaceFolder}/build-linux-debug/plagn",
+                "args": [
+                    "../docs/config/exampleConf.conf"
+                ],
                 "MIMode": "gdb",
                 "setupCommands": [
                     {

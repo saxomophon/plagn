@@ -30,7 +30,7 @@
 
 // own includes
 #include "PlagUdp.hpp"
-#include "PlagHTTPServer.hpp"
+#include "PlagHttpServer.hpp"
 #include "Utilities.hpp"
 
 using namespace std;
