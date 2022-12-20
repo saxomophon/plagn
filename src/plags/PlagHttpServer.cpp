@@ -48,46 +48,31 @@ PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioC
 
 int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
 {
+    // casting the parent plag
+    auto castParentPtr = dynamic_cast<PlagHttpServer *>(m_ptrParentPlag);
+    
     // getting the table as map
-    map<string, DataType> dgramMap;
-    if (lua_istable(L, -1))
-    {
-        lua_pushnil(L);
-        while (lua_next(L, -2) != 0)
-        {   
-            auto key = lua_tostring(L, -2);
-            if (lua_isinteger(L, -1))
-            {
-                auto val = lua_tointeger(L, -1);
-                dgramMap.insert(pair<string, int>(key, val));
-            }
-            else if (lua_isnumber(L, -1))
-            {
-                auto val = lua_tonumber(L, -1);
-                dgramMap.insert(pair<string, double>(key, val));
-            }
-            else if (lua_isstring(L, -1))
-            {
-                auto val = lua_tostring(L, -1);
-                dgramMap.insert(pair<string, string>(key, val));
-            }
-            lua_pop(L, 1);
-        }
-    }
-    shared_ptr<DatagramHttpServer> dataToSend(
-            new DatagramHttpServer(m_ptrParentPlagHttpServer->getName(), "", dgramMap));
+    auto dgramMap = LuaWrapper::getTable(L, -1);
 
-    m_reqIds.push_back(to_string(m_ptrParentPlagHttpServer->sendDatagram(dataToSend)));
+    // building the dgram
+    shared_ptr<DatagramHttpServer> dataToSend(
+            new DatagramHttpServer(castParentPtr->getName(), "", dgramMap));
+
+    // send the dgram and stored the 
+    m_reqIds.push_back(to_string(castParentPtr->sendDatagram(dataToSend)));
 
     return 0;
 }
 
 int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
 {
-    cout << "resvDatagramInterface()" << endl;
-    const int waitingTime = 5000;
+    // casting the parent plag
+    auto castParentPtr = dynamic_cast<PlagHttpServer *>(m_ptrParentPlag);
+
+    // some consts and variables
+    const int waitingTime = 5000; // TODO: Make this a paramter
     auto start = std::chrono::high_resolution_clock::now();
-    auto dgram = m_ptrParentPlagHttpServer->resvDatagram(m_reqIds);
+    auto dgram = castParentPtr->resvDatagram(m_reqIds);
         
     while (dgram  == nullptr)
     {
@@ -98,57 +83,16 @@ int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
             break;
         }
         std::this_thread::sleep_for(1ms);
-        dgram = m_ptrParentPlagHttpServer->resvDatagram(m_reqIds);
+        dgram = castParentPtr->resvDatagram(m_reqIds);
     }
     
-    lua_newtable(L);
     if (dgram != nullptr)
     {
-        for (auto param : dgram->getMap())
-        {
-            if (const int * pvar = get_if<int>(&param.second))
-            {
-                // value is int!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushinteger(L, *pvar);
-                lua_settable(L, -3);
-            }
-            else if (const unsigned int * pvar = get_if<unsigned int>(&param.second))
-            {
-                // value is uint!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushinteger(L, *pvar);
-                lua_settable(L, -3);
-            }
-            else if (const int64_t * pvar = get_if<int64_t>(&param.second))
-            {
-                // value is int64_t!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushinteger(L, *pvar);
-                lua_settable(L, -3);
-            }
-            else if (const uint64_t * pvar = get_if<uint64_t>(&param.second))
-            {
-                // value is uint64_t!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushinteger(L, *pvar);
-                lua_settable(L, -3);
-            }
-            else if (const double * pvar = get_if<double>(&param.second))
-            {
-                // value is double!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushnumber(L, *pvar);
-                lua_settable(L, -3);
-            }
-            else if (const string * pvar = get_if<string>(&param.second))
-            {
-                // value is string!
-                lua_pushstring(L, param.first.c_str());
-                lua_pushstring(L, pvar->c_str());
-                lua_settable(L, -3);
-            }
-        }
+        LuaWrapper::createTable(L, dgram->getMap());
+    }
+    else 
+    {
+        LuaWrapper::createTable(L, map<string, DataType>());
     }
     
     return 1;
@@ -184,10 +128,10 @@ HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
             m_reqIds.push_back(endpoint.endpointDef.endpoint);
 
             // Lua Magic
-            LuaWrapper LuaWrapper;
+            LuaWrapper luaWrapper;
 
             // create header table
-            LuaWrapper.createTable("reqHeader", req.getHeader());
+            luaWrapper.createTable("reqHeader", req.getHeader());
 
             // create params table
             luaWrapper.createTable("reqParams", req.getParams());
@@ -206,82 +150,52 @@ HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
             luaWrapper.addObjectPtr<PlagHttpServerConnection>(this);
             
             // send dgram
-            luaWrapper.addObjectPtr<PlagHttpServerConnection>("sendDatagram", [](lua_State * L) -> int
+            luaWrapper.createFunction("sendDatagram", [](lua_State * L) -> int
             {
-                PlagHttpServerConnection * ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
+                auto ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
                 return ptrThis->sendDatagramInterface(L);
             });
+            
             // resv dgram
-            luaWrapper.addObjectPtr<PlagHttpServerConnection>("resvDatagram", [](lua_State * L) -> int
+            luaWrapper.createFunction("resvDatagram", [](lua_State * L) -> int
             {
-                PlagHttpServerConnection * ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
+                auto ptrThis = LuaWrapper::getObjectPtr<PlagHttpServerConnection>(L);
                 return ptrThis->resvDatagramInterface(L);
             });
 
             // running the script
-            if (luaWrapper.executeFile("../docs/config/plags/plagHttpServer/example.lua") == LUA_OK)
+            if (luaWrapper.executeFile(endpoint.scriptFile) == LUA_OK)
             {
                 cout << "[C] Executed example.lua\n";
                 HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+
+                resp.addHeader(luaWrapper.getTableS("respHeader"));
+
+                resp.setContent(luaWrapper.getString("respContent"));
+
+                auto respStatusMap = luaWrapper.getTableS("respStatus");
                 
-                lua_getglobal(L, "respHeader");
-                if (lua_istable(L, -1))
-                {
-                    cout << endl << "respHeader:" << endl;
-                    lua_pushnil(L);
-                    while (lua_next(L, -2) != 0)
-                    {
-                        auto key = lua_tostring(L, -2);
-                        auto val = lua_tostring(L, -1);
-                        cout << key << ": " << val << endl;
-                        resp.addHeader(key, val);
-                        lua_pop(L, 1);
-                    }
-                }
-                
-                lua_getglobal(L, "respContent");
-                auto content = lua_tostring(L, -1);
-                cout << "respContent: " << content << endl;
-                resp.setContent(content);
+                auto code = stoi(respStatusMap["code"]);
+                auto msg = respStatusMap["message"];
+                resp.setStatus(AsyncHttpServerUtils::responseStatusCode_t({ code, msg }));
 
-
-                lua_getglobal(L, "respStatus");
-                if (lua_istable(L, -1))
-                {
-                    lua_getfield(L, -1, "code");
-                    auto respCode = static_cast<int>(lua_tointeger(L, -1));
-
-                    lua_getfield(L, -2, "message");
-                    auto respMessage = lua_tostring(L, -1);
-
-                    cout << "respCode: " << respCode << endl;
-                    cout << "respMessage: " << respMessage << endl;
-                    PlagHttpServer::responseStatusCode respStatus = { respCode, respMessage };
-                    resp.setStatus(respStatus);
-                }
-
-                m_sock.write_some(boost::asio::buffer(resp.encode()));
-                m_sock.close();
+                return resp;
             }
             else
             {
-                cout << "[C] Error reading script\n";
-                PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
-                resp.setStatus(PlagHttpServer::HTTP_500);
+                cout << "[C] Error reading script: " << endpoint.scriptFile << endl;
+                HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+                resp.setStatus(AsyncHttpServerUtils::HTTP_500);
 
-                m_sock.write_some(boost::asio::buffer(resp.encode()));
-                m_sock.close();
+                return resp;
             }
-            // close the Lua state
-            lua_close(L);
         }
         else
         {
-            PlagHttpServerHttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
-            resp.setStatus(PlagHttpServer::HTTP_404);
+            HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+            resp.setStatus(AsyncHttpServerUtils::HTTP_404);
 
-            m_sock.write_some(boost::asio::buffer(resp.encode()));
-            m_sock.close();
+            return resp;
         }
     }
 }
@@ -446,7 +360,7 @@ void PlagHttpServer::placeDatagram(const shared_ptr<Datagram> datagram) try
     {
         for (auto it = m_endpoints.begin(); it != m_endpoints.end(); it++)
         {
-            if (it->endpoint == castPtr->getReqId())
+            if (it->endpointDef.endpoint == castPtr->getReqId())
             {
                 it->stateDgram = castPtr;
                 return;
@@ -498,7 +412,7 @@ std::shared_ptr<DatagramHttpServer> PlagHttpServer::resvDatagram(const vector<st
     {
         for (auto reqId : reqIds)
         {
-            if (endpoint.endpoint == reqId)
+            if (endpoint.endpointDef.endpoint == reqId)
             {
                 return endpoint.stateDgram;
             }

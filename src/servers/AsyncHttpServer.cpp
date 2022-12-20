@@ -210,6 +210,14 @@ void HttpResponse::addHeader(string key, string value)
     m_header.insert(pair<string, string>(key, value));
 }
 
+void HttpResponse::addHeader(const std::map<std::string, std::string> & mapValues)
+{
+    for (auto values : mapValues)
+    {
+        m_header.insert(values);
+    }
+}
+
 void HttpResponse::setContent(string content)
 {
     m_content = content;

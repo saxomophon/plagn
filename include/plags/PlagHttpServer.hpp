@@ -61,6 +61,8 @@ public:
 private:
     int sendDatagramInterface(lua_State * L); //!< function for sending a dgram from lua
     int resvDatagramInterface(lua_State * L); //!< function for resv a dgram to lua 
+
+    std::vector<std::string> m_reqIds; //!< list of reqIds used in this connection
 };
 
 

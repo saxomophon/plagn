@@ -84,6 +84,7 @@ class HttpResponse: public HttpData
 public:
     HttpResponse(AsyncHttpServerUtils::httpMethod method, std::string version, std::string endpoint);
     void addHeader(std::string key, std::string value);
+    void addHeader(const std::map<std::string, std::string> & mapValues);
     void setContent(std::string content);
     void setStatus(AsyncHttpServerUtils::responseStatusCode_t status);
     std::string encode();

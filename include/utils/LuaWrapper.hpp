@@ -62,6 +62,13 @@ public:
     
     // create Lua globals
     // static
+    static void createTable(lua_State * L, const std::map<std::string, DataType> & mapValues);
+    static void createTable(lua_State * L, const std::map<std::string, std::string> & mapValues);
+    static void createString(lua_State * L, const std::string & value);
+    static void createInteger(lua_State * L, int value);
+    static void createNumber(lua_State * L, double value);
+    static void createFunction(lua_State * L, lua_CFunction func);
+    
     static void createTable(lua_State * L, const std::string & name, const std::map<std::string, DataType> & mapValues);
     static void createTable(lua_State * L, const std::string & name, const std::map<std::string, std::string> & mapValues);
     static void createString(lua_State * L, const std::string & name, const std::string & value);
@@ -81,18 +88,21 @@ public:
     // static
     // index based
     static std::map<std::string, DataType> getTable(lua_State * L, int idx);
+    static std::map<std::string, std::string> getTableS(lua_State * L, int idx);
     static std::string getString(lua_State * L, int idx);
     static int getInteger(lua_State * L, int idx);
     static double getNumber(lua_State * L, int idx);
 
     // name based
     static std::map<std::string, DataType> getTable(lua_State * L, const std::string & name);
+    static std::map<std::string, std::string> getTableS(lua_State * L, const std::string & name);
     static std::string getString(lua_State * L, const std::string & name);
     static int getInteger(lua_State * L, const std::string & name);
     static double getNumber(lua_State * L, const std::string & name);
 
     // non static
     std::map<std::string, DataType> getTable(const std::string & name);
+    std::map<std::string, std::string> getTableS(const std::string & name);
     std::string getString(const std::string & name);
     int getInteger(const std::string & name);
     double getNumber(const std::string & name);

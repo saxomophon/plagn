@@ -50,7 +50,7 @@ LuaWrapper::~LuaWrapper()
  * @brief create a new Lua table (DataTypes map and vector not supported, yet)
  *
  */
-void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, DataType> & mapValues)
+void LuaWrapper::createTable(lua_State * L, const std::map<std::string, DataType> & mapValues)
 {
     lua_createtable(L, 0, 4);
     for (auto valuePair : mapValues)
@@ -98,10 +98,9 @@ void LuaWrapper::createTable(lua_State * L, const std::string & name, const std:
             lua_settable(L, -3);
         }
     }
-    lua_setglobal(L, name.c_str());
 }
 
-void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, std::string> & mapValues)
+void LuaWrapper::createTable(lua_State * L, const std::map<std::string, std::string> & mapValues)
 {
     lua_createtable(L, 0, 4);
     for (auto valuePair : mapValues)
@@ -110,30 +109,61 @@ void LuaWrapper::createTable(lua_State * L, const std::string & name, const std:
         lua_pushstring(L, valuePair.second.c_str());
         lua_settable(L, -3);
     }
+}
+
+void LuaWrapper::createString(lua_State * L, const std::string & value)
+{
+    lua_pushstring(L, value.c_str());
+}
+
+void LuaWrapper::createInteger(lua_State * L, int value)
+{
+    lua_pushinteger(L, value);
+}
+
+void LuaWrapper::createNumber(lua_State * L, double value)
+{
+    lua_pushnumber(L, value);
+}
+
+void LuaWrapper::createFunction(lua_State * L, lua_CFunction func)
+{
+    lua_pushcfunction(L, func);
+}
+
+void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, DataType> & mapValues)
+{
+    createTable(L, mapValues);
+    lua_setglobal(L, name.c_str());
+}
+
+void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, std::string> & mapValues)
+{
+    createTable(L, mapValues);
     lua_setglobal(L, name.c_str());
 }
 
 void LuaWrapper::createString(lua_State * L, const std::string & name, const std::string & value)
 {
-    lua_pushstring(L, value.c_str());
+    createString(L, value);
     lua_setglobal(L, name.c_str());
 }
 
 void LuaWrapper::createInteger(lua_State * L, const std::string & name, int value)
 {
-    lua_pushinteger(L, value);
+    createInteger(L, value);
     lua_setglobal(L, name.c_str());
 }
 
 void LuaWrapper::createNumber(lua_State * L, const std::string & name, double value)
 {
-    lua_pushnumber(L, value);
+    createNumber(L, value);
     lua_setglobal(L, name.c_str());
 }
 
 void LuaWrapper::createFunction(lua_State * L, const std::string & name, lua_CFunction func)
 {
-    lua_pushcfunction(L, func);
+    createFunction(L, func);
     lua_setglobal(L, name.c_str());
 }
 
@@ -179,13 +209,7 @@ map<string, DataType> LuaWrapper::getTable(lua_State * L, int idx)
         lua_pushnil(L);
         while (lua_next(L, -2) != 0)
         {
-            if (lua_isstring(L, -1))
-            {
-                auto key = lua_tostring(L, -2);
-                auto val = lua_tostring(L, -1);
-                retMap.insert(pair<string, DataType>(key, val));
-            }
-            else if (lua_isinteger(L, -1))
+            if (lua_isinteger(L, -1))
             {
                 auto key = lua_tostring(L, -2);
                 auto val = static_cast<int>(lua_tointeger(L, -1));
@@ -197,9 +221,39 @@ map<string, DataType> LuaWrapper::getTable(lua_State * L, int idx)
                 auto val = static_cast<double>(lua_tonumber(L, -1));
                 retMap.insert(pair<string, DataType>(key, val));
             }
+            else if (lua_isstring(L, -1))
+            {
+                auto key = lua_tostring(L, -2);
+                auto val = lua_tostring(L, -1);
+                retMap.insert(pair<string, DataType>(key, val));
+            }
             lua_pop(L, 1);
         }
     }
+    
+    return retMap;
+}
+
+map<string, string> LuaWrapper::getTableS(lua_State * L, int idx)
+{
+    map<string, string> retMap;
+    
+    if (lua_istable(L, idx))
+    {
+        lua_pushnil(L);
+        while (lua_next(L, -2) != 0)
+        {
+            if (lua_isstring(L, -1))
+            {
+                auto key = lua_tostring(L, -2);
+                auto val = lua_tostring(L, -1);
+                retMap.insert(pair<string, string>(key, val));
+            }
+            lua_pop(L, 1);
+        }
+    }
+    
+    return retMap;
 }
 
 std::string LuaWrapper::getString(lua_State * L, int idx)
@@ -235,6 +289,12 @@ std::map<std::string, DataType> LuaWrapper::getTable(lua_State * L, const std::s
     return getTable(L, -1);
 }
 
+std::map<std::string, string> LuaWrapper::getTableS(lua_State * L, const std::string & name)
+{
+    lua_getglobal(L, name.c_str());
+    return getTableS(L, -1);
+}
+
 std::string LuaWrapper::getString(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
@@ -257,6 +317,11 @@ double LuaWrapper::getNumber(lua_State * L, const std::string & name)
 std::map<std::string, DataType> LuaWrapper::getTable(const std::string & name)
 {
     return getTable(m_luaState, name);
+}
+
+std::map<std::string, string> LuaWrapper::getTableS(const std::string & name)
+{
+    return getTableS(m_luaState, name);
 }
 
 std::string LuaWrapper::getString(const std::string & name)
