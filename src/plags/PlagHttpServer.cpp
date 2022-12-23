@@ -40,12 +40,25 @@ using namespace boost::asio;
 using namespace boost::algorithm;
 using ip::tcp;
 
-
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief constructs a PlagHttpServerConnection
+ *
+ * @param ioContext The io context
+ * @param ptrParentPlag The parent plag
+*/
 PlagHttpServerConnection::PlagHttpServerConnection(boost::asio::io_context & ioContext, Plag * ptrParentPlag)
     : AsyncHttpConnectionInterface(ioContext, ptrParentPlag)
 {
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief sendDatagramInterface Sends a datagram to the plagn infrastructure
+ *
+ * @param L The lua state
+ * @return int The number of return values
+*/
 int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
 {
     // casting the parent plag
@@ -64,6 +77,13 @@ int PlagHttpServerConnection::sendDatagramInterface(lua_State * L)
     return 0;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief resvDatagramInterface Receives a datagram from the plagn infrastructure
+ *
+ * @param L The lua state
+ * @return int The number of return values
+*/
 int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
 {
     // casting the parent plag
@@ -98,25 +118,17 @@ int PlagHttpServerConnection::resvDatagramInterface(lua_State * L)
     return 1;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief workingRequest Handles the request
+ *
+ * @param req The request
+ * @return HttpResponse The response
+*/
 HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
 {
     auto header = req.getHeader();
     auto params = req.getParams();
-
-    cout << "Method: " << req.getMethod() << endl;
-    cout << "URL: " << req.getEndpoint() << endl;
-    cout << "Http Version: " << req.getHttpVersion() << endl;
-    cout << "Complete Header: " << endl;
-    for (auto headerPair : header)
-    {
-        cout << headerPair.first << ": " << headerPair.second << endl;
-    }
-    cout << "Params: " << endl;
-    for (auto paramPair : params)
-    {
-        cout << paramPair.first << ": " << paramPair.second << endl;
-    }
-    cout << "Content: " << req.getContent() << endl;
 
     auto castPtrParent = dynamic_cast<PlagHttpServer*>(m_ptrParentPlag);
 
@@ -166,7 +178,6 @@ HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
             // running the script
             if (luaWrapper.executeFile(endpoint.scriptFile) == LUA_OK)
             {
-                cout << "[C] Executed example.lua\n";
                 HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
 
                 resp.addHeader(luaWrapper.getTableS("respHeader"));
@@ -236,6 +247,11 @@ PlagHttpServer::~PlagHttpServer()
     }
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief readConfig reads the config file and assigns the values to the member variables
+ * 
+ */
 void PlagHttpServer::readConfig() try
 {
     m_port = getParameter<uint16_t>("port");
@@ -377,6 +393,13 @@ catch (exception & e)
     throw eEdited;
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief PlagHttpServer::sendDatagram sends a Datagram to the next Plag in the chain
+ * 
+ * @param dgram The Datagram to send
+ * @return int The id of the Datagram
+ */
 int PlagHttpServer::sendDatagram(std::shared_ptr<DatagramHttpServer> dgram)
 {
     const lock_guard<mutex> lock(m_mtxSending);
@@ -390,6 +413,13 @@ int PlagHttpServer::sendDatagram(std::shared_ptr<DatagramHttpServer> dgram)
     return reqId++;
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief PlagHttpServer::resvDatagram receives a Datagram from the previous Plag in the chain
+ * 
+ * @param reqIds The ids of the Datagram to receive
+ * @return std::shared_ptr<DatagramHttpServer> The Datagram
+ */
 std::shared_ptr<DatagramHttpServer> PlagHttpServer::resvDatagram(const vector<string> & reqIds)
 {
     const lock_guard<mutex> lock(m_mtxRecv);

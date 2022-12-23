@@ -35,6 +35,13 @@ using namespace boost::asio::ip;
 using namespace boost::algorithm;
 using namespace AsyncHttpServerUtils;
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief get The header a header field of the http request
+ *
+ * @param key The key of the header field
+ * @return boost::optional<string> The value of the header field
+*/
 boost::optional<string> HttpData::getHeader(string key)
 {
     if (m_header.count(key) == 1)
@@ -45,31 +52,67 @@ boost::optional<string> HttpData::getHeader(string key)
     return boost::none;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getHeader Get the whole header of the http request
+ *
+ * @return map<string, string> The header of the http request
+*/
 map<string, string> HttpData::getHeader()
 {
     return m_header;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getContent Get the content of the http request
+ *
+ * @return string The content of the http request
+*/
 std::string HttpData::getContent()
 {
     return m_content;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getHttpVersion Get the http version of the http request
+ *
+ * @return string The http version of the http request
+*/
 std::string HttpData::getHttpVersion()
 {
     return m_version;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getEndpoint Get the endpoint of the http request
+ *
+ * @return string The endpoint of the http request
+*/
 std::string HttpData::getEndpoint()
 {
     return m_endpoint;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getMethod Get the http method of the http request
+ *
+ * @return AsyncHttpServerUtils::httpMethod The http method of the http request
+*/
 httpMethod HttpData::getMethod()
 {
     return m_method;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief construct a new HttpData object
+ *
+ * @param rawRequest The raw http request
+*/
 HttpRequest::HttpRequest(std::string rawRequest)
 {
     // parsing the rawRequest
@@ -161,6 +204,13 @@ HttpRequest::HttpRequest(std::string rawRequest)
     }
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getParam Get a param of the http request
+ *
+ * @param key The key of the param
+ * @return boost::optional<string> The value of the param
+*/
 boost::optional<std::string> HttpRequest::getParam(std::string key)
 {
     if (m_params.count(key) == 1)
@@ -171,11 +221,24 @@ boost::optional<std::string> HttpRequest::getParam(std::string key)
     return boost::none;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getParams Get all params of the http request
+ *
+ * @return map<string, string> All params of the http request
+*/
 std::map<std::string, std::string> HttpRequest::getParams()
 {
     return m_params;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief operator == Check if the http request is equal to the endpoint
+ *
+ * @param endpoint The endpoint to check
+ * @return true The http request is equal to the endpoint
+*/
 bool HttpRequest::operator == (const endpoint_t & endpoint)
 {
     // check the HTTP_METHOD
@@ -196,6 +259,14 @@ bool HttpRequest::operator == (const endpoint_t & endpoint)
     return false;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief constructs a new HttpResponse object
+ *
+ * @param method The http method
+ * @param version The http version
+ * @param endpoint The http endpoint
+*/
 HttpResponse::HttpResponse(httpMethod method, string version, string endpoint)
 {
     m_method = method;
@@ -205,11 +276,24 @@ HttpResponse::HttpResponse(httpMethod method, string version, string endpoint)
     addHeader("Server", "Plagn/0.0.1");
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief addHeader Add a header to the http response
+ *
+ * @param key The key of the header
+ * @param value The value of the header
+*/
 void HttpResponse::addHeader(string key, string value)
 {
     m_header.insert(pair<string, string>(key, value));
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief addHeader Add a header to the http response
+ *
+ * @param mapValues The map of the header
+*/
 void HttpResponse::addHeader(const std::map<std::string, std::string> & mapValues)
 {
     for (auto values : mapValues)
@@ -218,16 +302,34 @@ void HttpResponse::addHeader(const std::map<std::string, std::string> & mapValue
     }
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief setContent Set the content of the http response
+ *
+ * @param content The content of the http response
+*/
 void HttpResponse::setContent(string content)
 {
     m_content = content;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief setStatus Set the status of the http response
+ *
+ * @param status The status of the http response
+*/
 void HttpResponse::setStatus(responseStatusCode_t status)
 {
     m_status = status;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief encode Encode the http response
+ *
+ * @return string The encoded http response
+*/
 string HttpResponse::encode()
 {
     string encoded = m_version + " " + to_string(m_status.code) + " " + m_status.message + "\x0D\x0A";
@@ -242,11 +344,25 @@ string HttpResponse::encode()
     return encoded;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief constructs a new AsyncHttpConnectionInterface object
+ *
+ * @param ioContext The io context
+ * @param port The port of the http server
+ * @param ptrParentPlag The parent plag
+*/
 AsyncHttpConnectionInterface::AsyncHttpConnectionInterface(boost::asio::io_context & ioContext, Plag * ptrParentPlag)
     : AsyncTcpConnectionInterface(ioContext, ptrParentPlag)
 {
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief getRawRequest Get the raw request of the http request
+ *
+ * @return string The raw request of the http request
+*/
 string AsyncHttpConnectionInterface::getRawRequest()
 {
     string retValue = "";
@@ -298,6 +414,10 @@ string AsyncHttpConnectionInterface::getRawRequest()
     return retValue;
 }
 
+/**
+ * -------------------------------------------------------------------------------------------------
+ * @brief start Working the http request
+*/
 void AsyncHttpConnectionInterface::start()
 {
     HttpResponse resp = workingRequest(HttpRequest(getRawRequest()));

@@ -49,6 +49,8 @@ LuaWrapper::~LuaWrapper()
  *-------------------------------------------------------------------------------------------------
  * @brief create a new Lua table (DataTypes map and vector not supported, yet)
  *
+ * @param L Lua state
+ * @param mapValues map of values
  */
 void LuaWrapper::createTable(lua_State * L, const std::map<std::string, DataType> & mapValues)
 {
@@ -100,6 +102,13 @@ void LuaWrapper::createTable(lua_State * L, const std::map<std::string, DataType
     }
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua table (string, string))
+ *
+ * @param L Lua state
+ * @param mapValues map of values
+ */
 void LuaWrapper::createTable(lua_State * L, const std::map<std::string, std::string> & mapValues)
 {
     lua_createtable(L, 0, 4);
@@ -111,56 +120,132 @@ void LuaWrapper::createTable(lua_State * L, const std::map<std::string, std::str
     }
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua string
+ *
+ *  @param L Lua state
+ *  @param value string value
+ */
 void LuaWrapper::createString(lua_State * L, const std::string & value)
 {
     lua_pushstring(L, value.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua integer
+ *
+ * @param L Lua state
+ * @param value integer value
+ */
 void LuaWrapper::createInteger(lua_State * L, int value)
 {
     lua_pushinteger(L, value);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua number
+ *
+ * @param L Lua state
+ * @param value number value
+ */
 void LuaWrapper::createNumber(lua_State * L, double value)
 {
     lua_pushnumber(L, value);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua function
+ *
+ * @param L Lua state
+ * @param func function pointer
+ */
 void LuaWrapper::createFunction(lua_State * L, lua_CFunction func)
 {
     lua_pushcfunction(L, func);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua table (DataTypes map and vector not supported, yet)
+ *
+ * @param mapValues map of values
+ * @param L Lua state
+ * @param name name of the table
+ */
 void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, DataType> & mapValues)
 {
     createTable(L, mapValues);
     lua_setglobal(L, name.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua table (string, string))
+ *
+ * @param mapValues map of values
+ * @param L Lua state
+ * @param name name of the table
+ */
 void LuaWrapper::createTable(lua_State * L, const std::string & name, const std::map<std::string, std::string> & mapValues)
 {
     createTable(L, mapValues);
     lua_setglobal(L, name.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua string
+ *
+ * @param value string value
+ * @param L Lua state
+ * @param name name of the string
+ */
 void LuaWrapper::createString(lua_State * L, const std::string & name, const std::string & value)
 {
     createString(L, value);
     lua_setglobal(L, name.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua integer
+ *
+ * @param value integer value
+ * @param L Lua state
+ * @param name name of the integer
+ */
 void LuaWrapper::createInteger(lua_State * L, const std::string & name, int value)
 {
     createInteger(L, value);
     lua_setglobal(L, name.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua number
+ *
+ * @param value number value
+ * @param L Lua state
+ * @param name name of the number
+ */
 void LuaWrapper::createNumber(lua_State * L, const std::string & name, double value)
 {
     createNumber(L, value);
     lua_setglobal(L, name.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua function
+ *
+ * @param func function pointer
+ * @param L Lua state
+ * @param name name of the function
+ */
 void LuaWrapper::createFunction(lua_State * L, const std::string & name, lua_CFunction func)
 {
     createFunction(L, func);
@@ -168,31 +253,74 @@ void LuaWrapper::createFunction(lua_State * L, const std::string & name, lua_CFu
 }
 
 // non static
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua table (DataTypes map and vector not supported, yet)
+ *
+ * @param mapValues map of values
+ * @param name name of the table
+ */
 void LuaWrapper::createTable(const std::string & name, const std::map<std::string, DataType> & mapValues)
 {
     createTable(m_luaState, name, mapValues);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua table (string, string))
+ *
+ * @param mapValues map of values
+ * @param name name of the table
+ */
 void LuaWrapper::createTable(const std::string & name, const std::map<std::string, std::string> & mapValues)
 {
     createTable(m_luaState, name, mapValues);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua string
+ *
+ * @param value string value
+ * @param name name of the string
+ */
 void LuaWrapper::createString(const std::string & name, const std::string & value)
 {
     createString(m_luaState, name, value);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua integer
+ *
+ * @param value integer value
+ * @param name name of the integer
+ */
 void LuaWrapper::createInteger(const std::string & name, int value)
 {
     createInteger(m_luaState, name, value);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua number
+ *
+ * @param value number value
+ * @param name name of the number
+ */
 void LuaWrapper::createNumber(const std::string & name, double value)
 {
     createNumber(m_luaState, name, value);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief create a new Lua function
+ *
+ * @param func function pointer
+ * @param name name of the function
+ */
 void LuaWrapper::createFunction(const std::string & name, lua_CFunction func)
 {
     createFunction(m_luaState, name, func);
@@ -200,6 +328,15 @@ void LuaWrapper::createFunction(const std::string & name, lua_CFunction func)
 
 // get Lua globals
 // static
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param L Lua state
+ * @param idx idx of the table
+ * @return map of values
+ */
 map<string, DataType> LuaWrapper::getTable(lua_State * L, int idx)
 {
     map<string, DataType> retMap;
@@ -234,6 +371,14 @@ map<string, DataType> LuaWrapper::getTable(lua_State * L, int idx)
     return retMap;
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param L Lua state
+ * @param idx idx of the table
+ * @return map of values
+ */
 map<string, string> LuaWrapper::getTableS(lua_State * L, int idx)
 {
     map<string, string> retMap;
@@ -256,6 +401,14 @@ map<string, string> LuaWrapper::getTableS(lua_State * L, int idx)
     return retMap;
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua string
+ *
+ * @param L Lua state
+ * @param idx idx of the string
+ * @return string value
+ */
 std::string LuaWrapper::getString(lua_State * L, int idx)
 {
     if (lua_isstring(L, idx))
@@ -265,6 +418,14 @@ std::string LuaWrapper::getString(lua_State * L, int idx)
     return ""; // TODO: Error handling
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua integer
+ *
+ * @param L Lua state
+ * @param idx idx of the integer
+ * @return integer value
+ */
 int LuaWrapper::getInteger(lua_State * L, int idx)
 {
     if (lua_isinteger(L, idx))
@@ -274,6 +435,14 @@ int LuaWrapper::getInteger(lua_State * L, int idx)
     return INT_MIN; // TODO: Error handling
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua number
+ *
+ * @param L Lua state
+ * @param idx idx of the number
+ * @return number value
+ */
 double LuaWrapper::getNumber(lua_State * L, int idx)
 {
     if (lua_isnumber(L, idx))
@@ -283,30 +452,70 @@ double LuaWrapper::getNumber(lua_State * L, int idx)
     return INT_MIN; // TODO: Error handling
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param L Lua state
+ * @param name name of the table
+ * @return map of values
+ */
 std::map<std::string, DataType> LuaWrapper::getTable(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
     return getTable(L, -1);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param L Lua state
+ * @param name name of the table
+ * @return map of values
+ */
 std::map<std::string, string> LuaWrapper::getTableS(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
     return getTableS(L, -1);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua string
+ *
+ * @param L Lua state
+ * @param name name of the string
+ * @return string value
+ */
 std::string LuaWrapper::getString(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
     return getString(L, -1);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua integer
+ *
+ * @param L Lua state
+ * @param name name of the integer
+ * @return integer value
+ */
 int LuaWrapper::getInteger(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
     return getInteger(L, -1);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua number
+ *
+ * @param L Lua state
+ * @param name name of the number
+ * @return number value
+ */
 double LuaWrapper::getNumber(lua_State * L, const std::string & name)
 {
     lua_getglobal(L, name.c_str());
@@ -314,37 +523,88 @@ double LuaWrapper::getNumber(lua_State * L, const std::string & name)
 }
 
 // non static
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param name name of the table
+ * @return map of values
+ */
 std::map<std::string, DataType> LuaWrapper::getTable(const std::string & name)
 {
     return getTable(m_luaState, name);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua table
+ *
+ * @param name name of the table
+ * @return map of values
+ */
 std::map<std::string, string> LuaWrapper::getTableS(const std::string & name)
 {
     return getTableS(m_luaState, name);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua string
+ *
+ * @param name name of the string
+ * @return string value
+ */
 std::string LuaWrapper::getString(const std::string & name)
 {
     return getString(m_luaState, name);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua integer
+ *
+ * @param name name of the integer
+ * @return integer value
+ */
 int LuaWrapper::getInteger(const std::string & name)
 {
     return getInteger(m_luaState, name);
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief get a Lua number
+ *
+ * @param name name of the number
+ * @return number value
+ */
 double LuaWrapper::getNumber(const std::string & name)
 {
     return getNumber(m_luaState, name);
 }
 
 // execute code
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief execute a Lua file
+ *
+ * @param filename name of the file
+ * @return 0 if success
+ */
 int LuaWrapper::executeFile(const std::string & filename)
 {
     return luaL_dofile(m_luaState, filename.c_str());
 }
 
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief execute a Lua string
+ *
+ * @param code Lua code
+ * @return 0 if success
+ */
 int LuaWrapper::executeString(const std::string & code)
 {
     return luaL_dostring(m_luaState, code.c_str());
