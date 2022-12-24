@@ -19,54 +19,54 @@
 ]]
 
 -- some predefined HTTP status codes
-local HTTP_100 = { 100, "Continue" };
-local HTTP_101 = { 101, "Switching Protocols" };
-local HTTP_103 = { 103, "Early Hints" };
-local HTTP_200 = { 200, "OK" };
-local HTTP_201 = { 201, "Created" };
-local HTTP_202 = { 202, "Accepted" };
-local HTTP_203 = { 203, "Non - Authoritative Information" };
-local HTTP_204 = { 204, "No Content" };
-local HTTP_205 = { 205, "Reset Content" };
-local HTTP_206 = { 206, "Partial Content" };
-local HTTP_300 = { 300, "Multiple Choices" };
-local HTTP_301 = { 301, "Moved Permanently" };
-local HTTP_302 = { 302, "Found" };
-local HTTP_303 = { 303, "See Other" };
-local HTTP_304 = { 304, "Not Modified" };
-local HTTP_307 = { 307, "Temporary Redirect" };
-local HTTP_308 = { 308, "Permanent Redirect" };
-local HTTP_400 = { 400, "Bad Request" };
-local HTTP_401 = { 401, "Unauthorized" };
-local HTTP_402 = { 402, "Payment Required" };
-local HTTP_403 = { 403, "Forbidden" };
-local HTTP_404 = { 404, "Not Found" };
-local HTTP_405 = { 405, "Method Not Allowed" };
-local HTTP_406 = { 406, "Not Acceptable" };
-local HTTP_407 = { 407, "Proxy Authentication Required" };
-local HTTP_408 = { 408, "Request Timeout" };
-local HTTP_409 = { 409, "Conflict" };
-local HTTP_410 = { 410, "Gone" };
-local HTTP_411 = { 411, "Length Required" };
-local HTTP_412 = { 412, "Precondition Failed" };
-local HTTP_413 = { 413, "Payload Too Large" };
-local HTTP_414 = { 414, "URI Too Long" };
-local HTTP_415 = { 415, "Unsupported Media Type" };
-local HTTP_416 = { 416, "Range Not Satisfiable" };
-local HTTP_417 = { 417, "Expectation Failed" };
-local HTTP_418 = { 418, "I'm a teapot" };
-local HTTP_425 = { 425, "Too Early" };
-local HTTP_426 = { 426, "Upgrade Required" };
-local HTTP_428 = { 428, "Precondition Required" };
-local HTTP_429 = { 429, "Too Many Requests" };
-local HTTP_431 = { 431, "Request Header Fields Too Large" };
-local HTTP_451 = { 451, "Unavailable For Legal Reasons" };
-local HTTP_500 = { 500, "Internal Server Error" };
-local HTTP_501 = { 501, "Not Implemented" };
-local HTTP_502 = { 502, "Bad Gateway" };
-local HTTP_503 = { 503, "Service Unavailable" };
-local HTTP_504 = { 504, "Gateway Timeout" };
-local HTTP_505 = { 505, "HTTP Version Not Supported" };
-local HTTP_506 = { 506, "Variant Also Negotiates" };
-local HTTP_510 = { 510, "Not Extended" };
-local HTTP_511 = { 511, "Network Authentication Required" };
+HTTP_100 = { code = 100, message = " Continue" }
+HTTP_101 = { code = 101, message = " Switching Protocols" }
+HTTP_103 = { code = 103, message = " Early Hints" }
+HTTP_200 = { code = 200, message = " OK" }
+HTTP_201 = { code = 201, message = " Created" }
+HTTP_202 = { code = 202, message = " Accepted" }
+HTTP_203 = { code = 203, message = " Non - Authoritative Information" }
+HTTP_204 = { code = 204, message = " No Content" }
+HTTP_205 = { code = 205, message = " Reset Content" }
+HTTP_206 = { code = 206, message = " Partial Content" }
+HTTP_300 = { code = 300, message = " Multiple Choices" }
+HTTP_301 = { code = 301, message = " Moved Permanently" }
+HTTP_302 = { code = 302, message = " Found" }
+HTTP_303 = { code = 303, message = " See Other" }
+HTTP_304 = { code = 304, message = " Not Modified" }
+HTTP_307 = { code = 307, message = " Temporary Redirect" }
+HTTP_308 = { code = 308, message = " Permanent Redirect" }
+HTTP_400 = { code = 400, message = " Bad Request" }
+HTTP_401 = { code = 401, message = " Unauthorized" }
+HTTP_402 = { code = 402, message = " Payment Required" }
+HTTP_403 = { code = 403, message = " Forbidden" }
+HTTP_404 = { code = 404, message = " Not Found" }
+HTTP_405 = { code = 405, message = " Method Not Allowed" }
+HTTP_406 = { code = 406, message = " Not Acceptable" }
+HTTP_407 = { code = 407, message = " Proxy Authentication Required" }
+HTTP_408 = { code = 408, message = " Request Timeout" }
+HTTP_409 = { code = 409, message = " Conflict" }
+HTTP_410 = { code = 410, message = " Gone" }
+HTTP_411 = { code = 411, message = " Length Required" }
+HTTP_412 = { code = 412, message = " Precondition Failed" }
+HTTP_413 = { code = 413, message = " Payload Too Large" }
+HTTP_414 = { code = 414, message = " URI Too Long" }
+HTTP_415 = { code = 415, message = " Unsupported Media Type" }
+HTTP_416 = { code = 416, message = " Range Not Satisfiable" }
+HTTP_417 = { code = 417, message = " Expectation Failed" }
+HTTP_418 = { code = 418, message = " I'm a teapot" }
+HTTP_425 = { code = 425, message = " Too Early" }
+HTTP_426 = { code = 426, message = " Upgrade Required" }
+HTTP_428 = { code = 428, message = " Precondition Required" }
+HTTP_429 = { code = 429, message = " Too Many Requests" }
+HTTP_431 = { code = 431, message = " Request Header Fields Too Large" }
+HTTP_451 = { code = 451, message = " Unavailable For Legal Reasons" }
+HTTP_500 = { code = 500, message = " Internal Server Error" }
+HTTP_501 = { code = 501, message = " Not Implemented" }
+HTTP_502 = { code = 502, message = " Bad Gateway" }
+HTTP_503 = { code = 503, message = " Service Unavailable" }
+HTTP_504 = { code = 504, message = " Gateway Timeout" }
+HTTP_505 = { code = 505, message = " HTTP Version Not Supported" }
+HTTP_506 = { code = 506, message = " Variant Also Negotiates" }
+HTTP_510 = { code = 510, message = " Not Extended" }
+HTTP_511 = { code = 511, message = " Network Authentication Required" }

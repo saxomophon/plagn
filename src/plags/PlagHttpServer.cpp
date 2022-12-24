@@ -157,6 +157,9 @@ HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
             // create global for version
             luaWrapper.createString("reqHttpVersion", req.getHttpVersion());
 
+            // create global wd
+            luaWrapper.createString("reqWorkingDir", endpoint.workingDirectory);
+
             // pushing the functions for dgram to lua
             // first store "this" in L's extra storage
             luaWrapper.addObjectPtr<PlagHttpServerConnection>(this);
