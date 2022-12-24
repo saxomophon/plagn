@@ -212,6 +212,10 @@ HttpResponse PlagHttpServerConnection::workingRequest(HttpRequest req)
             return resp;
         }
     }
+    HttpResponse resp(req.getMethod(), req.getHttpVersion(), req.getEndpoint());
+    resp.setStatus(AsyncHttpServerUtils::HTTP_404);
+
+    return resp;
 }
 
 /**

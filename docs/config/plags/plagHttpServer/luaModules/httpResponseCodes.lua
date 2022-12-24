@@ -3,7 +3,7 @@
  @file plagHttpServerUtils.lua
  @author Fabian Köslin (fabian@koeslin.info)
  @contributors:
- @brief Holds some utility functions for the plagHttpServer Lua
+ @brief Holds http response codes
  @version 0.1
  @date 2022-12-23
  

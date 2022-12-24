@@ -19,23 +19,32 @@
 ]]
 
 -- require plagHttpServerUtils
-package.path = '../docs/config/plags/plagHttpServer/?.lua;' .. package.path
-require("plagHttpServerUtils")
+package.path = '../docs/config/plags/plagHttpServer/luaModules/?.lua;' .. package.path
+require("httpResponseCodes")
+require("httpContentUtils")
+require("httpContentTypes")
+
+-- initalize the respHeader
+respHeader = {}
 
 print("Endpoint: " .. reqEndpoint)
 
--- set the header for resp
-respHeader = {}
-respHeader["Content-Type"] = "text/html; charset=utf-8"
+-- set reqEntpoint to "/index.html" if it is "/"
+if reqEndpoint == "/" then
+    reqEndpoint = "/index.html"
+end
 
--- set the resp content, read from a file 
-local filename = reqWorkingDir .. "/www/index.html"
+-- set the filename for the resp content
+local filename = reqWorkingDir .. reqEndpoint
 
-local file = assert(io.open(filename, "rb"))
-
-respContent = file:read("*all")
-
-file:close()
-
--- set the resp return code and message
-respStatus = HTTP_200
+-- check if the file exists and return 404 if not, else return the content from the file and set the status to 200
+if not httpContentUtils.file_exists(filename) then
+    respStatus = HTTP_404
+    respContent = "404 - File not found"
+    return
+else
+    respContent, fileExtension = httpContentUtils.get_file_content(filename)
+    respStatus = HTTP_200
+    respHeader["Content-Type"] = httpContentTypes.get(fileExtension)
+    return
+end
