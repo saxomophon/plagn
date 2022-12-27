@@ -65,5 +65,9 @@ function httpContentUtils.parse_table_to_http_form_data(httpFormDataTable)
     for key, value in pairs(httpFormDataTable) do
         httpFormData = httpFormData .. key .. "=" .. value .. "&"
     end
+    
+    -- remove the last "&"
+    httpFormData = string.sub(httpFormData, 1, -2)
+
     return httpFormData
 end

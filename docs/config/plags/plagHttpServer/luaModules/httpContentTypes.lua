@@ -113,6 +113,8 @@ httpContentTypes["aac"] = "audio/aac"
 httpContentTypes["flac"] = "audio/flac"
 httpContentTypes["mid"] = "audio/midi"
 httpContentTypes["midi"] = "audio/midi"
+httpContentTypes["form"] = "multipart/form-data"
+httpContentTypes["x-www"] = "application/x-www-form-urlencoded"
 
 -- @brief Returns the value for the given key if exists and returns "txt" if not.
 function httpContentTypes.get(key)
