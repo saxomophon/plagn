@@ -122,7 +122,8 @@
             "format": "cpp",
             "forward_list": "cpp",
             "__bits": "cpp",
-            "execution": "cpp"
+            "execution": "cpp",
+            "*.inc": "cpp"
         },
         "doxdocgen.c.firstLine": "/**\n * -------------------------------------------------------------------------------------------------",
         "editor.formatOnPaste": true,

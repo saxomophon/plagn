@@ -23,6 +23,7 @@
 #include <iostream>
 
 // own include
+#include "DatagramMqtt.hpp"
 #include "DatagramUdp.hpp"
 #include "DatagramMap.hpp"
 #include "DatagramHttpServer.hpp"
@@ -41,12 +42,13 @@ using namespace std;
  * @param target the target Plag, where Datagrams need to be translated to
  */
 Kable::Kable(const boost::property_tree::ptree & propTree, const string & rootName,
-             std::shared_ptr<PlagInterface> parent, std::shared_ptr<PlagInterface> target) :
+             weak_ptr<PlagInterface> parent, weak_ptr<PlagInterface> target) :
     PropertyTreeReader(propTree, rootName),
     m_parent(parent),
     m_target(target),
-    m_targetType(target->getType())
+    m_targetType(none)
 {
+    if (!target.expired()) m_targetType = target.lock()->getType();
     readConfig();
 }
 
@@ -86,12 +88,17 @@ catch (exception & e)
  *
  * @param target the Plag, where the Datagrams should be delivered to instead
  */
-bool Kable::assignTarget(std::shared_ptr<PlagInterface> target) try
+bool Kable::assignTarget(weak_ptr<PlagInterface> target) try
 {
-    if (target->getType() == m_targetType)
+    if (!target.expired() && target.lock()->getType() == m_targetType)
     {
         m_target = target;
         return true;
+    }
+    else if (m_target.expired() || m_targetType == none)
+    {
+        m_target = target;
+        m_targetType = target.lock()->getType();
     }
     return false;
 }
@@ -131,6 +138,9 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
     string sourcePlag = get<string>(sourceDatagram->getData("sourcePlag"));
     switch (m_targetType)
     {
+    case PlagType::MQTT:
+        translatedDatagram = shared_ptr<DatagramMqtt>(new DatagramMqtt(sourcePlag));
+        break;
     case PlagType::UDP:
         translatedDatagram = shared_ptr<DatagramUdp>(new DatagramUdp(sourcePlag));
         break;
@@ -147,11 +157,20 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
     // working through translation table
     for (const pair<string, string> & mapEntry : m_translationMap)
     {
-        if (mapEntry.first == "sourcePlag"
+        try
+        {
+            if (mapEntry.first == "sourcePlag"
             || mapEntry.first == "targetPlag"
             || mapEntry.first == "gateCondition") continue;
-        translatedDatagram->setData(mapEntry.first,
-                                    sourceDatagram->getData(mapEntry.second));
+            translatedDatagram->setData(mapEntry.first,
+                                        sourceDatagram->getData(mapEntry.second));
+        }
+        catch (std::invalid_argument & e)
+        {
+            cout << "Invalid argument: " << e.what();
+            cout << "  -> Key \"" << mapEntry.second << "\" will be ignored!" << endl;
+            continue;
+        }
     }
 
     return translatedDatagram;
@@ -171,7 +190,8 @@ catch (exception & e)
  */
 void Kable::deliver(shared_ptr<Datagram> datagram) try
 {
-    m_target->placeDatagram(datagram);
+    // as Kable is owned by Plag, Kable has to check whether weak_ptr still points to valid target
+    if (!m_target.expired()) m_target.lock()->placeDatagram(datagram);
 }
 catch (exception & e)
 {

@@ -20,6 +20,7 @@
  */
 
 // std includes
+#include <iomanip> // for std::setw and std::setfill
 #include <sstream>
 
 // self include
@@ -32,6 +33,86 @@ const string plagn::DEFAULT_CONFIG_PATH = "./plagn.conf";
 #else
 const string plagn::DEFAULT_CONFIG_PATH = "/usr/etc/plagn.conf";
 #endif
+
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief extracts or converts a value of unspecified DataType into a boolean
+ *
+ * @param value instane of a std::variant (=typedef'ed to DataType)
+ * @param defaultValue what this value will equate to, for some errors
+ * @return bool
+ */
+bool convertDataTypeToBoolean(const DataType & value) try
+{
+    switch (value.index())
+    {
+    case plagn::INT:
+        return static_cast<bool>(get<int>(value));
+    case plagn::UINT:
+        return static_cast<bool>(get<unsigned int>(value));
+    case plagn::INT64:
+        return static_cast<bool>(get<int64_t>(value));
+    case plagn::UINT64:
+        return static_cast<bool>(get<uint64_t>(value));
+    case plagn::DOUBLE:
+        return static_cast<bool>(get<double>(value));
+    case plagn::STRING:
+        {
+            string valueAsStr = get<string>(value);
+            if (valueAsStr == "")
+            {
+                return false;
+            }
+            else if (isDigit(valueAsStr.front()))
+            {
+                return static_cast<bool>(stoi(valueAsStr, nullptr, 0));
+            }
+            else
+            {
+                // all to lower case, to make comparison easier
+                for (char & c : valueAsStr)
+                {
+                    c = static_cast<char>(tolower(c));
+                }
+                if (valueAsStr == "t" || valueAsStr == "true"
+                    || valueAsStr == "y" || valueAsStr == "yes"
+                    || valueAsStr == "j" || valueAsStr == "ja")
+                {
+                    return true;
+                }
+                else if (valueAsStr == "f" || valueAsStr == "false"
+                        || valueAsStr == "n" || valueAsStr == "no" || valueAsStr == "nope"
+                        || valueAsStr == "nein" || valueAsStr == "nee" || valueAsStr == "nö")
+                {
+                    return false;
+                }
+                else
+                {
+                    throw std::invalid_argument("Could not convert value to boolean!");
+                }
+            }
+        }
+    case plagn::MAP:
+        {
+            map<string, string> valueAsMap = get<map<string, string>>(value);
+            if (valueAsMap.count("value") > 0) return convertDataTypeToBoolean(valueAsMap["value"]);
+            throw std::invalid_argument("Did not find map entry for conversion to Int!");
+        }
+    case plagn::VECTOR:
+        {
+            vector<string> valueAsVector = get<vector<string>>(value);
+            if (valueAsVector.size() > 0) return convertDataTypeToBoolean(valueAsVector.front());
+            throw std::invalid_argument("Cannot use empty vector for conversion to Int!");
+        }
+    }
+    return false;
+}
+catch (exception & e)
+{
+    string error = string("In convertDataTypeToBool happened: ") + e.what();
+    throw std::runtime_error(error);
+}
 
 /**
  *-------------------------------------------------------------------------------------------------
@@ -77,7 +158,7 @@ int convertDataTypeToInt(const DataType & value, int defaultValue) try
                     && (valueAsStr.size() < 2
                         || !isDigit(valueAsStr[1]))))
             {
-                throw std::invalid_argument("Expected number. Got string!");
+                throw std::invalid_argument("Expected number. Got string: " + valueAsStr);
             }
             return stoi(valueAsStr, nullptr, 0);
         }
@@ -98,7 +179,8 @@ int convertDataTypeToInt(const DataType & value, int defaultValue) try
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToInt happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -147,7 +229,7 @@ unsigned int convertDataTypeToUint(const DataType & value, unsigned int defaultV
                 || (!isDigit(valueAsStr.front())
                     && static_cast<int>(valueAsStr.front()) != 0x2D))
             {
-                throw std::invalid_argument("Expected unsigned number. Got string!");
+                throw std::invalid_argument("Expected unsigned number. Got string: " + valueAsStr);
             }
             return convertDataTypeToUint(stoul(valueAsStr, nullptr, 0));
         }
@@ -168,7 +250,8 @@ unsigned int convertDataTypeToUint(const DataType & value, unsigned int defaultV
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToUint happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -210,7 +293,7 @@ int64_t convertDataTypeToInt64(const DataType & value, int64_t defaultValue) try
                     && (valueAsStr.size() < 2
                         || !isDigit(valueAsStr[1]))))
             {
-                throw std::invalid_argument("Expected number. Got string!");
+                throw std::invalid_argument("Expected number. Got string: " + valueAsStr);
             }
             return stoll(valueAsStr, nullptr, 0);
         }
@@ -231,7 +314,8 @@ int64_t convertDataTypeToInt64(const DataType & value, int64_t defaultValue) try
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToInt64 happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -278,7 +362,7 @@ uint64_t convertDataTypeToUint64(const DataType & value, uint64_t defaultValue) 
                 || (!isDigit(valueAsStr.front())
                     && static_cast<int>(valueAsStr.front()) != 0x2D))
             {
-                throw std::invalid_argument("Expected unsigned number. Got string!");
+                throw std::invalid_argument("Expected unsigned number. Got string: " + valueAsStr);
             }
             return stoull(valueAsStr, nullptr, 0);
         }
@@ -286,20 +370,21 @@ uint64_t convertDataTypeToUint64(const DataType & value, uint64_t defaultValue) 
         {
             map<string, string> valueAsMap = get<map<string, string>>(value);
             if (valueAsMap.count("value") > 0) return convertDataTypeToUint64(valueAsMap["value"]);
-            throw std::invalid_argument("Did not find map entry for conversion to Uint!");
+            throw std::invalid_argument("Did not find map entry for conversion to Uint64!");
         }
     case plagn::VECTOR:
         {
             vector<string> valueAsVector = get<vector<string>>(value);
             if (valueAsVector.size() > 0) return convertDataTypeToUint64(valueAsVector.front());
-            throw std::invalid_argument("Cannot use empty vector for conversion to Uint!");
+            throw std::invalid_argument("Cannot use empty vector for conversion to Uint64!");
         }
     }
     return returnValue;
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToUint64 happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -338,7 +423,7 @@ double convertDataTypeToDouble(const DataType & value, double defaultValue) try
                     && (valueAsStr.size() < 2
                         || !isDigit(valueAsStr[1]))))
             {
-                throw std::invalid_argument("Expected floating point number. Got string!");
+                throw std::invalid_argument("Expected floating point number. Got string: " + valueAsStr);
             }
             return stod(valueAsStr, nullptr);
         }
@@ -346,20 +431,21 @@ double convertDataTypeToDouble(const DataType & value, double defaultValue) try
         {
             map<string, string> valueAsMap = get<map<string, string>>(value);
             if (valueAsMap.count("value") > 0) return convertDataTypeToDouble(valueAsMap["value"]);
-            throw std::invalid_argument("Did not find map entry for conversion to Uint!");
+            throw std::invalid_argument("Did not find map entry for conversion to Double!");
         }
     case plagn::VECTOR:
         {
             vector<string> valueAsVector = get<vector<string>>(value);
             if (valueAsVector.size() > 0) return convertDataTypeToDouble(valueAsVector.front());
-            throw std::invalid_argument("Cannot use empty vector for conversion to Uint!");
+            throw std::invalid_argument("Cannot use empty vector for conversion to Double!");
         }
     }
     return returnValue;
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToDouble happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -402,7 +488,8 @@ string convertDataTypeToString(const DataType & value) try
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToString happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -516,7 +603,8 @@ map<string, string> convertDataTypeToMap(const DataType & value) try
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToMap happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -618,7 +706,8 @@ vector<string> convertDataTypeToVector(const DataType & value) try
 }
 catch (exception & e)
 {
-    throw std::runtime_error("happened here");
+    string error = string("In convertDataTypeToVector happened: ") + e.what();
+    throw std::runtime_error(error);
 }
 
 /**
@@ -664,6 +753,38 @@ bool endsWith(char c, const std::string & text)
 }
 
 /**
+ *-------------------------------------------------------------------------------------------------
+ * @brief Gets you a ascii hex presentation of a binary string (often useful for debugging)
+ * 
+ * @param binaryStr the string as raw bytes
+ * @param separator what the ascii hex representation will use to seperate the bytes
+ * @return string a string of two characters for each byte for 0 to F.
+ */
+string getBinStringAsAsciiHex(const string & binaryStr, const string & separator) try
+{
+    stringstream asciiHex;
+    bool isFirst = true;
+    for (const unsigned char & c : binaryStr)
+    {
+        if (!isFirst)
+        {
+            asciiHex << separator;
+        }
+        else
+        {
+            isFirst = false;
+        }
+        asciiHex << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(c);
+    }
+    return asciiHex.str();
+}
+catch (exception & e)
+{
+    string error = string("In getBinStringAsAsciiHex happened: ") + e.what();
+    throw std::runtime_error(error);
+}
+
+/**
  * -------------------------------------------------------------------------------------------------
  * @brief generates a string representation of time in the ISO-format "YYYY-mm-DDThh:mm:ssZ"
  * @param timePoint seconds since epoch (epoch starts at 1970-01-01 00:00:00 UTC)
@@ -700,7 +821,8 @@ ostream & operator<<(ostream & os, const vector<string> & strVector)
     bool isFirst = true;
     for (const string & txt : strVector)
     {
-        os << (isFirst ? "\"" : "\", \"") << txt;
+        os << (isFirst ? "\"" : "\"; \"") << txt;
+        if (isFirst) isFirst = false;
     }
     return os << "\"]";
 }
@@ -720,7 +842,8 @@ ostream & operator<<(ostream & os, const map<string, string> & strMap)
     bool isFirst = true;
     for (const pair<string, string> & item : strMap)
     {
-        os << (isFirst ? "\"" : ", \"") << item.first << "\":\"" << item.second << "\"";
+        os << (isFirst ? "\"" : "; \"") << item.first << "\":\"" << item.second << "\"";
+        if (isFirst) isFirst = false;
     }
     return os << "}";
 }

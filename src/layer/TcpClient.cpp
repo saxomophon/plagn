@@ -37,7 +37,7 @@ using namespace std;
  * @param port port number under whicht to connect to server
  */
 TcpClient::TcpClient(const std::chrono::milliseconds & timeout,
-                     shared_ptr<Plag> parent, const string & serverIP, uint16_t port) try :
+                     const Plag & parent, const string & serverIP, uint16_t port) try :
     TransportLayer(timeout),
     m_parent(parent),
     m_endpoint(boost::asio::ip::address::from_string(serverIP), port),
