@@ -78,7 +78,10 @@
                 },
                 "args": [
                     "..",
-                    "-GNinja"
+                    "-GNinja",
+                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake",
+                    "-DOPENSSL_ROOT_DIR=./vcpkg/packages/",
+                    "-DCMAKE_BUILD_TYPE=Debug "
                 ]
             },
             "osx": {

@@ -97,6 +97,7 @@ public:
     {
         boost::property_tree::ptree::path_type customPath(m_rootName + "|" + key, '|');
         boost::optional<T> tmp = m_propertyTree.get_optional<T>(customPath);
+        
         return (tmp.is_initialized()) ? tmp.value() : defaultValue;
     }
     catch (std::exception & e)
@@ -122,7 +123,7 @@ public:
     {
         // ATTENTION! USING NAMESPACE BOOST::PROPERTY_TREE FOR BREVITY
         using namespace boost::property_tree;
-        boost::optional<T> tmp = propTree.get_optional<T>(rootName + "|" + key, '|');
+        boost::optional<T> tmp = propTree.get_optional<T>(ptree::path_type(rootName + "|" + key, '|'));
         return (tmp.is_initialized()) ? tmp.value() : defaultValue;
     }
     catch (std::exception & e)

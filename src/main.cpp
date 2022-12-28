@@ -31,6 +31,7 @@
 // own includes
 #include "PlagMqtt.hpp"
 #include "PlagUdp.hpp"
+#include "PlagHttpServer.hpp"
 #include "Utilities.hpp"
 
 using namespace std;
@@ -139,6 +140,11 @@ int main(int argc, char * argv[])
             else if (type == "udp")
             {
                 shared_ptr<Plag> sharedPlag(new PlagUdp(propertyTree, name, index));
+                allPlags.insert_or_assign(name, sharedPlag);
+            }
+            else if (type == "httpserver")
+            {
+                shared_ptr<Plag> sharedPlag(new PlagHttpServer(propertyTree, name, index));
                 allPlags.insert_or_assign(name, sharedPlag);
             }
             index++;

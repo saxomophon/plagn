@@ -25,6 +25,8 @@
 // own include
 #include "DatagramMqtt.hpp"
 #include "DatagramUdp.hpp"
+#include "DatagramMap.hpp"
+#include "DatagramHttpServer.hpp"
 
 // self include
 #include "Kable.hpp"
@@ -141,6 +143,9 @@ shared_ptr<Datagram> Kable::translate(shared_ptr<Datagram> sourceDatagram) try
         break;
     case PlagType::UDP:
         translatedDatagram = shared_ptr<DatagramUdp>(new DatagramUdp(sourcePlag));
+        break;
+    case PlagType::HttpServer:
+        translatedDatagram = shared_ptr<DatagramHttpServer>(new DatagramHttpServer(sourcePlag));
         break;
     case PlagType::none:
         //deliberate fall-through

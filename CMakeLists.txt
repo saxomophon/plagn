@@ -25,6 +25,11 @@ find_package(OpenSSL REQUIRED SSL Crypto)
 include_directories(${OPENSSL_INCLUDE_DIR})
 set(LIBS ${LIBS} ${OPENSSL_LIBRARIES})
 
+# lua stuff
+find_package(Lua REQUIRED)
+include_directories(${LUA_INCLUDE_DIR})
+set(LIBS ${LIBS} ${LUA_LIBRARIES})
+
 # boost stuff
 set(Boost_USE_STATIC_LIBS       ON)
 set(Boost_USE_MULTITHREADED     ON)
@@ -39,6 +44,7 @@ file(GLOB SOURCES "src/*.cpp"
                   "src/datagrams/*.cpp"
                   "src/layer/*.cpp"
                   "src/plags/*.cpp"
+                  "src/servers/*.cpp")
                   "src/plags/mqtt/*.cpp")
 
 add_executable(plagn ${SOURCES})
@@ -49,7 +55,9 @@ target_include_directories(plagn PRIVATE include
                                          include/utils
                                          include/layer
                                          include/plags
+                                         include/servers)
                                          include/plags/mqtt)
+
 # source files added to include dirs
 target_include_directories(plagn PRIVATE src)
 

@@ -13,6 +13,7 @@
         "boost-serialization",
         "boost-system",
         "boost-thread",
-        "openssl"
+        "openssl",
+        "lua"
     ]
 }
