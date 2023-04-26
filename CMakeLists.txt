@@ -44,7 +44,7 @@ file(GLOB SOURCES "src/*.cpp"
                   "src/datagrams/*.cpp"
                   "src/layer/*.cpp"
                   "src/plags/*.cpp"
-                  "src/servers/*.cpp")
+                  "src/servers/*.cpp"
                   "src/plags/mqtt/*.cpp")
 
 add_executable(plagn ${SOURCES})
@@ -55,7 +55,7 @@ target_include_directories(plagn PRIVATE include
                                          include/utils
                                          include/layer
                                          include/plags
-                                         include/servers)
+                                         include/servers
                                          include/plags/mqtt)
 
 # source files added to include dirs
