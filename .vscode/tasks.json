@@ -68,8 +68,7 @@
                     "-G",
                     "Visual Studio 16 2019",
                     "-A",
-                    "x64",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake"
+                    "x64"
                 ]
             },
             "linux": {
@@ -79,7 +78,6 @@
                 "args": [
                     "..",
                     "-GNinja",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake",
                     "-DOPENSSL_ROOT_DIR=./vcpkg/packages/",
                     "-DCMAKE_BUILD_TYPE=Debug "
                 ]
@@ -91,8 +89,9 @@
                 "args": [
                     "..",
                     "-GNinja",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake",
-                    "-DOPENSSL_ROOT_DIR=./vcpkg/packages/",
+                    "-DOPENSSL_ROOT_DIR=${workspaceFolder}/vcpkg/packages/openssl_x64-osx",
+                    "-DLUA_LIBRARIES=${workspaceFolder}/vcpkg/packages/lua_x64-osx/lib",
+                    "-DLUA_INCLUDE_DIR=${workspaceFolder}/vcpkg/packages/lua_x64-osx/include",
                     "-DCMAKE_BUILD_TYPE=Debug "
                 ]
             }
@@ -194,8 +193,7 @@
                     "-G",
                     "Visual Studio 16 2019",
                     "-A",
-                    "x64",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake"
+                    "x64"
                 ]
             },
             "linux": {
@@ -204,8 +202,7 @@
                 },
                 "args": [
                     "..",
-                    "-GNinja",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake"
+                    "-GNinja"
                 ]
             },
             "osx": {
@@ -215,9 +212,10 @@
                 "args": [
                     "..",
                     "-GNinja",
-                    "-DCMAKE_TOOLCHAIN_FILE=./vcpkg/scripts/buildsystems/vcpkg.cmake",
-                    "-DOPENSSL_ROOT_DIR=./vcpkg/packages/",
-                    "-DCMAKE_BUILD_TYPE=Debug "
+                    "-DOPENSSL_ROOT_DIR=${workspaceFolder}/vcpkg/packages/openssl_x64-osx",
+                    "-DLUA_LIBRARIES=${workspaceFolder}/vcpkg/packages/lua_x64-osx/lib",
+                    "-DLUA_INCLUDE_DIR=${workspaceFolder}/vcpkg/packages/lua_x64-osx/include",
+                    "-DCMAKE_BUILD_TYPE=Release"
                 ]
             }
         },
