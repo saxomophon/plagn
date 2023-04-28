@@ -36,6 +36,16 @@ TransportLayer::TransportLayer(const std::chrono::milliseconds & timeout) :
 
 /**
  *-------------------------------------------------------------------------------------------------
+ * @brief Destroy the Transport Layer:: Transport Layer object
+ * @details empty stub, that was needed due to compiler errors
+ *
+ */
+TransportLayer::~TransportLayer()
+{
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
  * @brief simple getter
  * 
  * @return LayerType member value
