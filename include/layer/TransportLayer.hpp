@@ -58,6 +58,7 @@ public:
     };
     // methods ----------------
     TransportLayer(const std::chrono::milliseconds & timeout);
+    virtual ~TransportLayer();
 
     virtual LayerType getType() const;
 
