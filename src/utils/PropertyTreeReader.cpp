@@ -19,6 +19,9 @@
  *
  */
 
+// std includes
+#include <vector>
+
 // self include
 #include "PropertyTreeReader.hpp"
 

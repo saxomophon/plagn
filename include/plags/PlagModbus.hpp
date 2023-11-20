@@ -91,12 +91,16 @@ public:
 private:
     void parseBuffer();
     std::string extractPDU();
+    bool extractCoilFromPDU(uint16_t pos, const std::string & pdu);
+    DataType extractWordFromPDU(uint16_t pos, uint16_t reg, const std::string & pdu);
     std::string makeBytesFromDatagram(const std::shared_ptr<DatagramModbus> datagram);
 
 private:
     // config parameters
     bool m_isServer;                //!< whether this acts as server (in old docs referred to as master) or client (=> false)
     bool m_usesSerial;              //!< whether this is connected overs serial (=>true) or TCP (=>false)
+    bool m_bytesAreSwapped;         //!< whether or not bytes are swapped (e.g. AB CD will be received as BA DC)
+    bool m_wordsAreSwapped;         //!< whether or not words (aks 2 bytes) are swapped (e.g. AB CD will be received as CD AB)
     int16_t m_ownId;                //!< the own id in serial connection
     std::string m_connectionType;   //!< type of connetion (e.g. Serial, TCP Client, TCP Server, ...)
     std::string m_comPort;          //!< port for serial connection
@@ -106,10 +110,14 @@ private:
     uint8_t m_stopBits;             //!< stop bit count times ten for serial connection
     std::string m_serverIP;         //!< IP for TCP connection as client
     uint16_t m_tcpPort;             //!< port number for TCP connection (any)
+    // config maps
+    std::map<uint16_t, ModbusDataType> m_registerToType; //!< map of register adresses to the data type, that's behind it
+    std::map<uint16_t, std::string> m_registerToName;    //!< map of register ids to user-chosen names
 
     // worker members
     std::string m_buffer;                        //!< where to read received data to
     std::unique_ptr<TransportLayer> m_dataLayer; //!< access to data stream
+    std::map<std::string, uint16_t> m_nameToRegister; //!< map of register names (set by user, see config maps) to register adresses
 };
 
 #endif // PLAGMODBUS_HPP

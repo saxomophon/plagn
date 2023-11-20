@@ -179,43 +179,248 @@ void PlagModbus::parseBuffer() try
     {
         uint8_t functionCode = static_cast<uint8_t>(pdu[0]);
         bool isError = functionCode & FunctionCode::EXCEPTION_MASK;
+        uint16_t registerCount = 0;
+        uint16_t startRegister = 0xFFFF;
         switch (functionCode)
         {
         case FunctionCode::READ_COIL:
-            break;
-        case FunctionCode::READ_INPUT:
+        case FunctionCode::READ_INPUT: // deliberate fall-through
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), functionCode,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_HOLDING_REGISTER:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                uint16_t value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_HOLDING_REGISTER,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_INPUT_REGISTER:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_INPUT_REGISTER,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::WRITE_SINGLE_COIL:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::WRITE_SINGLE_COIL,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::WRITE_SINGLE_REGISTER:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::WRITE_SINGLE_REGISTER,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_EXCEPTION:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_EXCEPTION,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::DIAGNOSTICS:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::DIAGNOSTICS,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::GET_COM_COUNTER:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::GET_COM_COUNTER,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::GET_COM_LOG:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::GET_COM_LOG,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::WRITE_COILS:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::WRITE_COILS,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::WRITE_REGISTERS:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::WRITE_REGISTERS,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::REPORT_SERVER_ID:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::REPORT_SERVER_ID,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_FILE:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_FILE,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::WRITE_FILE:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::WRITE_FILE,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::MASK_WRITE_REGISTER:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::MASK_WRITE_REGISTER,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_WRITE_REGISTERS:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_WRITE_REGISTERS,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::READ_FIFO:
+            registerCount = static_cast<uint16_t>(pdu[1]) << 8;
+            registerCount |= static_cast<uint8_t>(pdu[2]);
+            startRegister = static_cast<uint16_t>(pdu[3]) << 8;
+            startRegister |= static_cast<uint8_t>(pdu[4]);
+            for (size_t i = 0; i < registerCount; i++)
+            {
+                shared_ptr<DatagramModbus> datagram;
+                bool value = extractCoilFromPDU(i, pdu);
+                datagram = make_shared<DatagramModbus>(this->getName(), FunctionCode::READ_FIFO,
+                                                       value, startRegister + i);
+                m_outgoingDatagrams.push_back(datagram);
+            }
             break;
         case FunctionCode::ENCAPSULATED:
             // currently not supported
@@ -396,6 +601,132 @@ catch (exception & e)
 {
     string errorMsg = e.what();
     errorMsg += "\nSomething happened in PlagModbus::extractPDU()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+bool PlagModbus::extractCoilFromPDU(uint16_t pos, const std::string & pdu) try
+{
+    uint16_t offset = 5;
+    uint16_t bytePos = pos / 8;
+    uint8_t bitPos = pos % 8;
+    uint8_t bitMask = 1 << (15 - bitPos);
+    bool result = pdu[offset + bytePos] & bitMask;
+    return result;
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in PlagModbus::extractCoilFromPDU()";
+    runtime_error eEdited(errorMsg);
+    throw eEdited;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
+ * @brief Extract a word (e.g. a register'S result) from a PDU
+ * @details This is a convenience function. As it might be possible (though it is discouraged), that
+ * a read result, will have more than one register read.
+ * @param pos Word position in the result (e.g. first word, second word). Starting at 0.
+ * @param reg Register adress, that is currently read.
+ * @param pdu The entire PDU (aka process data unit)
+ * @return DataType As the actual type is not specified, we'll use this convenience type.
+ * @remark It is highly discouraged to read among differently sized types with one request, as if
+ * will cause errors
+ */
+DataType PlagModbus::extractWordFromPDU(uint16_t pos, uint16_t reg, const std::string & pdu) try
+{
+    uint16_t offset = 5;
+    uint8_t byteCount = 2;
+    ModbusDataType modbusType = ModbusDataType::UINT16;
+    if (m_registerToType.count(reg)) modbusType = m_registerToType[reg];
+    if (modbusType == ModbusDataType::INT32
+        || modbusType == ModbusDataType::UINT32
+        || modbusType == ModbusDataType::FLOAT32
+        || modbusType == ModbusDataType::FLOAT64)
+    {
+        byteCount = (modbusType == ModbusDataType::FLOAT64) ? 8 : 4;
+    }
+    // NOTE: it is highly discouraged to read among differently sized types with one request
+    uint16_t byteStartPos = pos * byteCount;
+    vector<uint8_t> bytes(byteCount, 0);
+    for (size_t i = 0; i < byteCount; i++)
+    {
+        uint8_t wordPos = i / 2;
+        if (m_wordsAreSwapped) wordPos = byteCount - wordPos;
+        uint8_t bytePos = (i % 2 == 0) ? 0 : 1;
+        if (m_bytesAreSwapped) bytePos = (bytePos == 0) ? 1 : 0;
+        bytes[wordPos * 2 + bytePos] = pdu[byteStartPos + i];
+    }
+    DataType result;
+    switch (modbusType)
+    {
+    case ModbusDataType::INT16:
+        {
+            int16_t preResult = bytes.at(0) << 8;
+            preResult |= bytes.at(1);
+            result = DataType(preResult);
+        }
+        break;
+    case ModbusDataType::UINT16:
+        {
+            uint16_t preResult = bytes.at(0) << 8;
+            preResult |= bytes.at(1);
+            result = DataType(preResult);
+        }
+        break;
+    case ModbusDataType::INT32:
+        {
+            int32_t preResult = bytes.at(0) << 24;
+            preResult |= bytes.at(1) << 16;
+            preResult |= bytes.at(2) << 8;
+            preResult |= bytes.at(3);
+            result = DataType(preResult);
+        }
+        break;
+    case ModbusDataType::UINT32:
+        {
+            uint32_t preResult = bytes.at(0) << 24;
+            preResult |= bytes.at(1) << 16;
+            preResult |= bytes.at(2) << 8;
+            preResult |= bytes.at(3);
+            result = DataType(preResult);
+        }
+        break;
+    case ModbusDataType::FLOAT16:
+        {
+            //TODO: translate
+        }
+        break;
+    case ModbusDataType::FLOAT32:
+        {
+            float preResult = 0.f;
+            unsigned char * charCast = reinterpret_cast<unsigned char *>(&preResult);
+            for (size_t i = 0; i < byteCount; i++)
+            {
+                charCast[i] = bytes.at(i);
+            }
+            result = DataType(preResult);
+        }
+        break;
+    case ModbusDataType::FLOAT64:
+        {
+            double preResult = 0.;
+            unsigned char * charCast = reinterpret_cast<unsigned char *>(&preResult);
+            for (size_t i = 0; i < byteCount; i++)
+            {
+                charCast[i] = bytes.at(i);
+            }
+            result = DataType(preResult);
+        }
+        break;
+    }
+    return result;
+}
+catch (exception & e)
+{
+    string errorMsg = e.what();
+    errorMsg += "\nSomething happened in PlagModbus::extractWordFromPDU()";
     runtime_error eEdited(errorMsg);
     throw eEdited;
 }
