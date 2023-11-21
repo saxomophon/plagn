@@ -55,6 +55,7 @@ public:
     ModbusDataType getDataType() const;
     DataType getValue() const;
     uint16_t getRegister() const;
+    std::string getAssignedName() const;
 
     virtual DataType getData(const std::string & key) const;
 
@@ -64,9 +65,10 @@ public:
 
 
 private:
-    ModbusDataType m_type;  //!< type of the modbus data (within modbus spec)
-    DataType m_value;       //!< the data read
-    uint16_t m_register;    //!< register the value is read from/written to
+    ModbusDataType m_type;      //!< type of the modbus data (within modbus spec)
+    DataType m_value;           //!< the data read
+    uint16_t m_register;        //!< register the value is read from/written to
+    std::string m_assignedName; //!< name assigned to register by the config file
 };
 
 #endif // DATAGRAMMODBUS_HPP

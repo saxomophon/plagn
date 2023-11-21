@@ -92,7 +92,8 @@ private:
     void parseBuffer();
     std::string extractPDU();
     bool extractCoilFromPDU(uint16_t pos, const std::string & pdu);
-    DataType extractWordFromPDU(uint16_t pos, uint16_t reg, const std::string & pdu);
+    DataType extractWordFromPDU(uint16_t startPos, uint8_t length, ModbusDataType type,
+                                const std::string & pdu);
     std::string makeBytesFromDatagram(const std::shared_ptr<DatagramModbus> datagram);
 
 private:

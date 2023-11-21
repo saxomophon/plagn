@@ -88,6 +88,17 @@ uint16_t DatagramModbus::getRegister() const
 
 /**
  *-------------------------------------------------------------------------------------------------
+ * @brief simple getter
+ *
+ * @return string copy of member value
+ */
+string DatagramModbus::getAssignedName() const
+{
+    return m_assignedName;
+}
+
+/**
+ *-------------------------------------------------------------------------------------------------
  * @brief method to access data of Datagram under just one name
  *
  * @param key reference name of the value to access
@@ -106,6 +117,10 @@ DataType DatagramModbus::getData(const string & key) const try
     else if (key == string("register"))
     {
         return getRegister();
+    }
+    else if (key == string("assignedName"))
+    {
+        return getAssignedName();
     }
     else // use base class implementation
     {
@@ -141,6 +156,10 @@ void DatagramModbus::setData(const string & key, const DataType & value) try
     else if (key == string("register"))
     {
         m_register = static_cast<uint16_t>(convertDataTypeToUint(value));
+    }
+    else if (key == string("assignedName"))
+    {
+        m_assignedName = convertDataTypeToString(value);
     }
     else // use base class implementation
     {
